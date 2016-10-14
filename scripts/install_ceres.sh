@@ -17,12 +17,24 @@
 set -o errexit
 set -o verbose
 
+
+git clone https://github.com/hitcm/ceres-solver-1.11.0.git
+
+cd ceres-solver-1.11.0/build
+
+cmake ..
+
+make –j
+
+sudo make install
+
+
 # Build and install Ceres.
-git clone https://ceres-solver.googlesource.com/ceres-solver
-cd ceres-solver
-mkdir build
-cd build
-cmake .. -G Ninja
-ninja
-ninja test
-sudo ninja install
+# git clone https://ceres-solver.googlesource.com/ceres-solver
+# cd ceres-solver
+# mkdir build
+# cd build
+# cmake .. -G Ninja
+# ninja
+# ninja test
+# sudo ninja install
