@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "cartographer/kalman_filter/odometry_state_tracker.h"
+#include "../kalman_filter/odometry_state_tracker.h"
 
-#include "cartographer/transform/rigid_transform.h"
+#include "../transform/rigid_transform.h"
 
 namespace cartographer {
 namespace kalman_filter {
@@ -27,26 +27,33 @@ OdometryState::OdometryState(const common::Time time,
     : time(time), odometer_pose(odometer_pose), state_pose(state_pose) {}
 
 OdometryStateTracker::OdometryStateTracker(const int window_size)
-    : window_size_(window_size) {
+    : window_size_(window_size)
+{
   CHECK_GT(window_size, 0);
 }
 
+//返回整个里程计队列
 const OdometryStateTracker::OdometryStates&
-OdometryStateTracker::odometry_states() const {
+OdometryStateTracker::odometry_states() const
+{
   return odometry_states_;
 }
 
+/*增加里程计数据到队列中　如果超过了window_size_，则会把过时的里程计状态去除掉*/
 void OdometryStateTracker::AddOdometryState(
-    const OdometryState& odometry_state) {
+    const OdometryState& odometry_state)
+{
   odometry_states_.push_back(odometry_state);
-  while (odometry_states_.size() > window_size_) {
+  while (odometry_states_.size() > window_size_)
+  {
     odometry_states_.pop_front();
   }
 }
 
 bool OdometryStateTracker::empty() const { return odometry_states_.empty(); }
 
-const OdometryState& OdometryStateTracker::newest() const {
+const OdometryState& OdometryStateTracker::newest() const
+{
   return odometry_states_.back();
 }
 

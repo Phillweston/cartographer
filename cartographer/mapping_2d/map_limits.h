@@ -20,15 +20,15 @@
 #include <utility>
 #include <vector>
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "cartographer/common/math.h"
-#include "cartographer/mapping/trajectory_node.h"
-#include "cartographer/mapping_2d/xy_index.h"
-#include "cartographer/sensor/laser.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/transform/rigid_transform.h"
-#include "cartographer/transform/transform.h"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Geometry"
+#include "../common/math.h"
+#include "../mapping/trajectory_node.h"
+#include "../mapping_2d/xy_index.h"
+#include "../sensor/laser.h"
+#include "../sensor/point_cloud.h"
+#include "../transform/rigid_transform.h"
+#include "../transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -36,11 +36,22 @@ namespace mapping_2d {
 
 // Defines the limits of a grid map. This class must remain inlined for
 // performance reasons.
-class MapLimits {
+
+/*
+ * 这个类主要储存了一些栅格地图的信息．
+ * 比如说
+ * cell的数量－－地图的最大范围 in cell
+ * 地图的分辨率．
+ * 地图的最大范围　地图最大范围 in meters
+*/
+
+class MapLimits
+{
  public:
   MapLimits(const double resolution, const Eigen::Vector2d& max,
             const CellLimits& cell_limits)
-      : resolution_(resolution), max_(max), cell_limits_(cell_limits) {
+      : resolution_(resolution), max_(max), cell_limits_(cell_limits)
+  {
     CHECK_GT(resolution_, 0.);
     CHECK_GT(cell_limits.num_x_cells, 0.);
     CHECK_GT(cell_limits.num_y_cells, 0.);
@@ -61,7 +72,8 @@ class MapLimits {
   // outside the map, i.e., negative or too large indices that will return
   // false for Contains().
   Eigen::Array2i GetXYIndexOfCellContainingPoint(const double x,
-                                                 const double y) const {
+                                                 const double y) const
+  {
     // Index values are row major and the top left has Eigen::Array2i::Zero()
     // and contains (centered_max_x, centered_max_y). We need to flip and
     // rotate.

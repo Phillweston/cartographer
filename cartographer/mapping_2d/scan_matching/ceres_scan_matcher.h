@@ -20,12 +20,13 @@
 #include <memory>
 #include <vector>
 
-#include "Eigen/Core"
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
-#include "cartographer/mapping_2d/probability_grid.h"
+#include "eigen3/Eigen/Core"
+#include "../common/lua_parameter_dictionary.h"
+#include "../kalman_filter/pose_tracker.h"
+#include "../mapping_2d/probability_grid.h"
+#include "../sensor/point_cloud.h"
+
 #include "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
-#include "cartographer/sensor/point_cloud.h"
 #include "ceres/ceres.h"
 
 namespace cartographer {

@@ -20,13 +20,15 @@
 #include <utility>
 #include <vector>
 
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/port.h"
-#include "cartographer/mapping_2d/probability_grid.h"
+#include "../common/lua_parameter_dictionary.h"
+#include "../common/port.h"
+#include "../mapping_2d/probability_grid.h"
+
+#include "../mapping_2d/xy_index.h"
+#include "../sensor/laser.h"
+#include "../sensor/point_cloud.h"
+
 #include "cartographer/mapping_2d/proto/laser_fan_inserter_options.pb.h"
-#include "cartographer/mapping_2d/xy_index.h"
-#include "cartographer/sensor/laser.h"
-#include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
 namespace mapping_2d {
@@ -34,7 +36,12 @@ namespace mapping_2d {
 proto::LaserFanInserterOptions CreateLaserFanInserterOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-class LaserFanInserter {
+
+/*
+ * 定义了激光雷达的插入器　用来进行激光雷达数据的插入操作
+*/
+class LaserFanInserter
+{
  public:
   explicit LaserFanInserter(const proto::LaserFanInserterOptions& options);
 

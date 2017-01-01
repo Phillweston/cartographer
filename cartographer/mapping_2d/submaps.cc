@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/submaps.h"
+#include "../mapping_2d/submaps.h"
 
 #include <cinttypes>
 #include <cmath>
@@ -22,9 +22,9 @@
 #include <fstream>
 #include <limits>
 
-#include "Eigen/Geometry"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/common/port.h"
+#include "eigen3/Eigen/Geometry"
+#include "../common/make_unique.h"
+#include "../common/port.h"
 #include "glog/logging.h"
 #include "webp/encode.h"
 
@@ -34,7 +34,8 @@ namespace mapping_2d {
 namespace {
 
 void WriteDebugImage(const string& filename,
-                     const ProbabilityGrid& probability_grid) {
+                     const ProbabilityGrid& probability_grid)
+{
   constexpr int kUnknown = 128;
   const mapping_2d::CellLimits& cell_limits =
       probability_grid.limits().cell_limits();
@@ -66,7 +67,8 @@ void WriteDebugImage(const string& filename,
 }  // namespace
 
 ProbabilityGrid ComputeCroppedProbabilityGrid(
-    const ProbabilityGrid& probability_grid) {
+    const ProbabilityGrid& probability_grid)
+{
   Eigen::Array2i offset;
   CellLimits limits;
   probability_grid.ComputeCroppedLimits(&offset, &limits);
@@ -86,7 +88,8 @@ ProbabilityGrid ComputeCroppedProbabilityGrid(
 }
 
 proto::SubmapsOptions CreateSubmapsOptions(
-    common::LuaParameterDictionary* const parameter_dictionary) {
+    common::LuaParameterDictionary* const parameter_dictionary)
+{
   proto::SubmapsOptions options;
   options.set_resolution(parameter_dictionary->GetDouble("resolution"));
   options.set_half_length(parameter_dictionary->GetDouble("half_length"));
@@ -114,27 +117,47 @@ Submaps::Submaps(const proto::SubmapsOptions& options)
   AddSubmap(Eigen::Vector2f::Zero());
 }
 
-void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan) {
+/**
+ * @brief Submaps::InsertLaserFan
+ * 插入一个激光雷达到submaps中．
+ * @param laser_fan
+ */
+void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan)
+{
   CHECK_LT(num_laser_fans_, std::numeric_limits<int>::max());
   ++num_laser_fans_;
-  for (const int index : insertion_indices()) {
+  for (const int index : insertion_indices())
+  {
     Submap* submap = submaps_[index].get();
     CHECK(submap->finished_probability_grid == nullptr);
     laser_fan_inserter_.Insert(laser_fan, &submap->probability_grid);
     submap->end_laser_fan_index = num_laser_fans_;
   }
   ++num_laser_fans_in_last_submap_;
-  if (num_laser_fans_in_last_submap_ == options_.num_laser_fans()) {
+  if (num_laser_fans_in_last_submap_ == options_.num_laser_fans())
+  {
     AddSubmap(laser_fan.origin);
   }
 }
 
-const Submap* Submaps::Get(int index) const {
+/**
+ * @brief Submaps::Get
+ * 得到下标为index的submap
+ * @param index     submap对应的下标
+ * @return
+ */
+const Submap* Submaps::Get(int index) const
+{
   CHECK_GE(index, 0);
   CHECK_LT(index, size());
   return submaps_[index].get();
 }
 
+/**
+ * @brief Submaps::size
+ * 得到submap的数量
+ * @return
+ */
 int Submaps::size() const { return submaps_.size(); }
 
 void Submaps::SubmapToProto(
@@ -145,7 +168,8 @@ void Submaps::SubmapToProto(
                                Get(index)->probability_grid, response);
 }
 
-void Submaps::FinishSubmap(int index) {
+void Submaps::FinishSubmap(int index)
+{
   // Crop the finished Submap before inserting a new Submap to reduce peak
   // memory usage a bit.
   Submap* submap = submaps_[index].get();
@@ -160,7 +184,13 @@ void Submaps::FinishSubmap(int index) {
   }
 }
 
-void Submaps::AddSubmap(const Eigen::Vector2f& origin) {
+/**
+ * @brief Submaps::AddSubmap
+ * 增加一个submap
+ * @param origin    新增加的submap的原点
+ */
+void Submaps::AddSubmap(const Eigen::Vector2f& origin)
+{
   if (size() > 1) {
     FinishSubmap(size() - 2);
   }

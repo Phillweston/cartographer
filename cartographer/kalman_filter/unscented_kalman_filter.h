@@ -22,29 +22,41 @@
 #include <functional>
 #include <vector>
 
-#include "Eigen/Cholesky"
-#include "Eigen/Core"
-#include "Eigen/Eigenvalues"
-#include "cartographer/kalman_filter/gaussian_distribution.h"
+#include "eigen3/Eigen/Cholesky"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Eigenvalues"
+#include "./gaussian_distribution.h"
 #include "glog/logging.h"
+
+
+/*UKF的实现过程*/
 
 namespace cartographer {
 namespace kalman_filter {
 
+/*返回一个数的平方*/
 template <typename FloatType>
-constexpr FloatType sqr(FloatType a) {
+constexpr FloatType sqr(FloatType a)
+{
   return a * a;
 }
 
+/*
+ * 返回一个向量的外积.外积的结果是一个N*N的矩阵.
+ * 向量为一个列向量．列向量＊行向量 = N*N矩阵
+*/
 template <typename FloatType, int N>
 Eigen::Matrix<FloatType, N, N> OuterProduct(
-    const Eigen::Matrix<FloatType, N, 1>& v) {
+    const Eigen::Matrix<FloatType, N, 1>& v)
+{
   return v * v.transpose();
 }
 
 // Checks if 'A' is a symmetric matrix.
+//判断矩阵Ａ是否为一个对称矩阵
 template <typename FloatType, int N>
-void CheckSymmetric(const Eigen::Matrix<FloatType, N, N>& A) {
+void CheckSymmetric(const Eigen::Matrix<FloatType, N, N>& A)
+{
   // This should be pretty much Eigen::Matrix<>::Zero() if the matrix is
   // symmetric.
   const FloatType norm = (A - A.transpose()).norm();
@@ -54,9 +66,11 @@ void CheckSymmetric(const Eigen::Matrix<FloatType, N, N>& A) {
 }
 
 // Returns the matrix square root of a symmetric positive semidefinite matrix.
+// 返回正定对称矩阵的开方
 template <typename FloatType, int N>
 Eigen::Matrix<FloatType, N, N> MatrixSqrt(
-    const Eigen::Matrix<FloatType, N, N>& A) {
+    const Eigen::Matrix<FloatType, N, N>& A)
+{
   CheckSymmetric(A);
 
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix<FloatType, N, N>>
@@ -79,8 +93,13 @@ Eigen::Matrix<FloatType, N, N> MatrixSqrt(
 //
 // Extended to handle non-additive noise/sensors inspired by Kraft, E., A
 // Quaternion-based Unscented Kalman Filter for Orientation Tracking.
+/*
+ * ukf类主要实现了probabilistic robotics上面介绍的ukf滤波器
+ * 同时针对四元数追踪做了一些修改
+*/
 template <typename FloatType, int N>
-class UnscentedKalmanFilter {
+class UnscentedKalmanFilter
+{
  public:
   using StateType = Eigen::Matrix<FloatType, N, 1>;
   using StateCovarianceType = Eigen::Matrix<FloatType, N, N>;
@@ -102,8 +121,10 @@ class UnscentedKalmanFilter {
   // Does the control/prediction step for the filter. The control must be
   // implicitly added by the function g which also does the state transition.
   // 'epsilon' is the additive combination of control and model noise.
+  // ukf的预测过程
   void Predict(std::function<StateType(const StateType&)> g,
-               const GaussianDistribution<FloatType, N>& epsilon) {
+               const GaussianDistribution<FloatType, N>& epsilon)
+  {
     CheckSymmetric(epsilon.GetCovariance());
 
     // Get the state mean and matrix root of its covariance.
@@ -115,7 +136,8 @@ class UnscentedKalmanFilter {
     Y.emplace_back(g(mu));
 
     const FloatType kSqrtNPlusLambda = std::sqrt(N + kLambda);
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N; ++i)
+    {
       // Order does not matter here as all have the same weights in the
       // summation later on anyways.
       Y.emplace_back(g(add_delta_(mu, kSqrtNPlusLambda * sqrt_sigma.col(i))));
@@ -125,7 +147,8 @@ class UnscentedKalmanFilter {
 
     StateCovarianceType new_sigma =
         kCovWeight0 * OuterProduct<FloatType, N>(compute_delta_(new_mu, Y[0]));
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N; ++i)
+    {
       new_sigma += kCovWeightI * OuterProduct<FloatType, N>(
                                      compute_delta_(new_mu, Y[2 * i + 1]));
       new_sigma += kCovWeightI * OuterProduct<FloatType, N>(
@@ -140,10 +163,12 @@ class UnscentedKalmanFilter {
   // into an observation that should be zero, i.e., the sensor readings should
   // be included in this function already. 'delta' is the measurement noise and
   // must have zero mean.
+  // ukf的观测过程
   template <int K>
   void Observe(
       std::function<Eigen::Matrix<FloatType, K, 1>(const StateType&)> h,
-      const GaussianDistribution<FloatType, K>& delta) {
+      const GaussianDistribution<FloatType, K>& delta)
+  {
     CheckSymmetric(delta.GetCovariance());
     // We expect zero mean delta.
     CHECK_NEAR(delta.GetMean().norm(), 0., 1e-9);
@@ -164,7 +189,8 @@ class UnscentedKalmanFilter {
 
     Eigen::Matrix<FloatType, K, 1> z_hat = kMeanWeight0 * Z[0];
     const FloatType kSqrtNPlusLambda = std::sqrt(N + kLambda);
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N; ++i)
+    {
       // Order does not matter here as all have the same weights in the
       // summation later on anyways.
       W.emplace_back(kSqrtNPlusLambda * sqrt_sigma.col(i));
@@ -179,7 +205,8 @@ class UnscentedKalmanFilter {
 
     Eigen::Matrix<FloatType, K, K> S =
         kCovWeight0 * OuterProduct<FloatType, K>(Z[0] - z_hat);
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N; ++i)
+    {
       S += kCovWeightI * OuterProduct<FloatType, K>(Z[2 * i + 1] - z_hat);
       S += kCovWeightI * OuterProduct<FloatType, K>(Z[2 * i + 2] - z_hat);
     }
@@ -188,7 +215,8 @@ class UnscentedKalmanFilter {
 
     Eigen::Matrix<FloatType, N, K> sigma_bar_xz =
         kCovWeight0 * W[0] * (Z[0] - z_hat).transpose();
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N; ++i)
+    {
       sigma_bar_xz +=
           kCovWeightI * W[2 * i + 1] * (Z[2 * i + 1] - z_hat).transpose();
       sigma_bar_xz +=
@@ -205,13 +233,15 @@ class UnscentedKalmanFilter {
         add_delta_(mu, kalman_gain * -z_hat), new_sigma);
   }
 
-  const GaussianDistribution<FloatType, N>& GetBelief() const {
+  const GaussianDistribution<FloatType, N>& GetBelief() const
+  {
     return belief_;
   }
 
  private:
   StateType ComputeWeightedError(const StateType& mean_estimate,
-                                 const std::vector<StateType>& states) {
+                                 const std::vector<StateType>& states)
+  {
     StateType weighted_error =
         kMeanWeight0 * compute_delta_(mean_estimate, states[0]);
     for (int i = 1; i != 2 * N + 1; ++i) {
@@ -222,19 +252,23 @@ class UnscentedKalmanFilter {
 
   // Algorithm for computing the mean of non-additive states taken from Kraft's
   // Section 3.4, adapted to our implementation.
-  StateType ComputeMean(const std::vector<StateType>& states) {
+  StateType ComputeMean(const std::vector<StateType>& states)
+  {
     CHECK_EQ(states.size(), 2 * N + 1);
     StateType current_estimate = states[0];
     StateType weighted_error = ComputeWeightedError(current_estimate, states);
     int iterations = 0;
-    while (weighted_error.norm() > 1e-9) {
+    while (weighted_error.norm() > 1e-9)
+    {
       double step_size = 1.;
-      while (true) {
+      while (true)
+      {
         const StateType next_estimate =
             add_delta_(current_estimate, step_size * weighted_error);
         const StateType next_error =
             ComputeWeightedError(next_estimate, states);
-        if (next_error.norm() < weighted_error.norm()) {
+        if (next_error.norm() < weighted_error.norm())
+        {
           current_estimate = next_estimate;
           weighted_error = next_error;
           break;

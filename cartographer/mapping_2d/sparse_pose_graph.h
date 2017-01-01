@@ -52,8 +52,13 @@
 namespace cartographer {
 namespace mapping_2d {
 
+/*
+ * SparsePoseGraph用来完成闭环检测，并进行bundleadjustment来进行位姿优化．
+*/
+
 // Implements the SPA loop closure method.
-class SparsePoseGraph : public mapping::SparsePoseGraph {
+class SparsePoseGraph : public mapping::SparsePoseGraph
+{
  public:
   SparsePoseGraph(
       const mapping::proto::SparsePoseGraphOptions& options,
@@ -86,10 +91,13 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
       override;
   std::vector<transform::Rigid3d> GetSubmapTransforms(
       const mapping::Submaps& submaps) EXCLUDES(mutex_) override;
+
   transform::Rigid3d GetLocalToGlobalTransform(const mapping::Submaps& submaps)
       EXCLUDES(mutex_) override;
+
   std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
       EXCLUDES(mutex_);
+
   std::vector<Constraint2D> constraints_2d() override;
   std::vector<Constraint3D> constraints_3d() override;
 
@@ -112,7 +120,8 @@ class SparsePoseGraph : public mapping::SparsePoseGraph {
     const mapping::Submaps* trajectory = nullptr;
   };
 
-  int GetSubmapIndex(const mapping::Submap* submap) const REQUIRES(mutex_) {
+  int GetSubmapIndex(const mapping::Submap* submap) const REQUIRES(mutex_)
+  {
     const auto iterator = submap_indices_.find(submap);
     CHECK(iterator != submap_indices_.end());
     return iterator->second;

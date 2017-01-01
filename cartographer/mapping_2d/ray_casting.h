@@ -19,17 +19,19 @@
 
 #include <functional>
 
-#include "cartographer/mapping_2d/map_limits.h"
-#include "cartographer/mapping_2d/xy_index.h"
-#include "cartographer/sensor/laser.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/transform/transform.h"
+#include "../mapping_2d/map_limits.h"
+#include "../mapping_2d/xy_index.h"
+#include "../sensor/laser.h"
+#include "../sensor/point_cloud.h"
+#include "../transform/transform.h"
 
 namespace cartographer {
 namespace mapping_2d {
 
 // For each ray in 'laser_fan', calls 'hit_visitor' and 'miss_visitor' on the
 // appropriate cells. Hits are handled before misses.
+// 进行栅格地图构建的时候需要用到的raytrace，基本算法为bresenham2d算法．
+// 计算hit_visitor 和 miss_visitor，先处理hits
 void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
               const std::function<void(const Eigen::Array2i&)>& hit_visitor,
               const std::function<void(const Eigen::Array2i&)>& miss_visitor);

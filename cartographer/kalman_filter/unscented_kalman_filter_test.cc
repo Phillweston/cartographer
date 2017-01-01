@@ -23,29 +23,34 @@ namespace cartographer {
 namespace kalman_filter {
 namespace {
 
-Eigen::Matrix<double, 1, 1> Scalar(double value) {
+Eigen::Matrix<double, 1, 1> Scalar(double value)
+{
   return value * Eigen::Matrix<double, 1, 1>::Identity();
 }
 
 // A simple model that copies the first to the second state variable.
-Eigen::Matrix<double, 2, 1> g(const Eigen::Matrix<double, 2, 1>& state) {
+Eigen::Matrix<double, 2, 1> g(const Eigen::Matrix<double, 2, 1>& state)
+{
   Eigen::Matrix<double, 2, 1> new_state;
   new_state << state[0], state[0];
   return new_state;
 }
 
 // A simple observation of the first state variable.
-Eigen::Matrix<double, 1, 1> h(const Eigen::Matrix<double, 2, 1>& state) {
+Eigen::Matrix<double, 1, 1> h(const Eigen::Matrix<double, 2, 1>& state)
+{
   return Scalar(state[0]) - Scalar(5.);
 }
 
-TEST(KalmanFilterTest, testConstructor) {
+TEST(KalmanFilterTest, testConstructor)
+{
   UnscentedKalmanFilter<double, 2> filter(GaussianDistribution<double, 2>(
       Eigen::Vector2d(0., 42.), 10. * Eigen::Matrix2d::Identity()));
   EXPECT_NEAR(42., filter.GetBelief().GetMean()[1], 1e-9);
 }
 
-TEST(KalmanFilterTest, testPredict) {
+TEST(KalmanFilterTest, testPredict)
+{
   UnscentedKalmanFilter<double, 2> filter(GaussianDistribution<double, 2>(
       Eigen::Vector2d(42., 0.), 10. * Eigen::Matrix2d::Identity()));
   filter.Predict(
@@ -55,7 +60,8 @@ TEST(KalmanFilterTest, testPredict) {
   EXPECT_NEAR(filter.GetBelief().GetMean()[1], 42., 1e-2);
 }
 
-TEST(KalmanFilterTest, testObserve) {
+TEST(KalmanFilterTest, testObserve)
+{
   UnscentedKalmanFilter<double, 2> filter(GaussianDistribution<double, 2>(
       Eigen::Vector2d(0., 42.), 10. * Eigen::Matrix2d::Identity()));
   for (int i = 0; i < 500; ++i) {

@@ -17,15 +17,22 @@
 #ifndef CARTOGRAPHER_MAPPING_2D_GLOBAL_TRAJECTORY_BUILDER_H_
 #define CARTOGRAPHER_MAPPING_2D_GLOBAL_TRAJECTORY_BUILDER_H_
 
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
-#include "cartographer/mapping_2d/local_trajectory_builder.h"
-#include "cartographer/mapping_2d/sparse_pose_graph.h"
+#include "../mapping/global_trajectory_builder_interface.h"
+#include "../mapping_2d/local_trajectory_builder.h"
+#include "../mapping_2d/sparse_pose_graph.h"
 
 namespace cartographer {
 namespace mapping_2d {
 
+/*
+ * 总的类，在这里面会调用其他的定义的东西．
+ * 在ros里面使用的时候，也只需要定义这个类的实例就可以
+ * 这里面有localbuildtrajectorybuilder来进行submap的构建．
+ * 以及sparse_pose_graph来进行闭环检测和全局优化
+*/
 class GlobalTrajectoryBuilder
-    : public mapping::GlobalTrajectoryBuilderInterface {
+    : public mapping::GlobalTrajectoryBuilderInterface
+{
  public:
   GlobalTrajectoryBuilder(const proto::LocalTrajectoryBuilderOptions& options,
                           SparsePoseGraph* sparse_pose_graph);
@@ -42,11 +49,14 @@ class GlobalTrajectoryBuilder
 
   void AddHorizontalLaserFan(common::Time time,
                              const sensor::LaserFan3D& laser_fan) override;
+
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
+
   void AddOdometerPose(
       common::Time time, const transform::Rigid3d& pose,
       const kalman_filter::PoseCovariance& covariance) override;
+
   void AddLaserFan3D(common::Time, const sensor::LaserFan3D&) override {
     LOG(FATAL) << "Not implemented.";
   };

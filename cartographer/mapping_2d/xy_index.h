@@ -30,7 +30,9 @@
 namespace cartographer {
 namespace mapping_2d {
 
-struct CellLimits {
+//cellLimits　存储地图的范围in cells
+struct CellLimits
+{
   CellLimits() = default;
   CellLimits(int init_num_x_cells, int init_num_y_cells)
       : num_x_cells(init_num_x_cells), num_y_cells(init_num_y_cells) {}
@@ -40,10 +42,17 @@ struct CellLimits {
 };
 
 // Iterates in row-major order through a range of xy-indices.
+/*
+ * 实现一个xy-index的迭代器．
+ * 因为地图的储存方式是１维，我们在访问某一个区域的时候．
+ * 可以通过这个迭代器不断的自加来进行访问
+*/
 class XYIndexRangeIterator
-    : public std::iterator<std::input_iterator_tag, Eigen::Array2i> {
+    : public std::iterator<std::input_iterator_tag, Eigen::Array2i>
+{
  public:
   // Constructs a new iterator for the specified range.
+  //　定义一个特定范围的迭代器
   XYIndexRangeIterator(const Eigen::Array2i& min_xy_index,
                        const Eigen::Array2i& max_xy_index)
       : min_xy_index_(min_xy_index),
@@ -51,19 +60,25 @@ class XYIndexRangeIterator
         xy_index_(min_xy_index) {}
 
   // Constructs a new iterator for everything contained in 'cell_limits'.
+  // 通过cell_limits来新建一个迭代器
   explicit XYIndexRangeIterator(const CellLimits& cell_limits)
       : XYIndexRangeIterator(Eigen::Array2i::Zero(),
                              Eigen::Array2i(cell_limits.num_x_cells - 1,
                                             cell_limits.num_y_cells - 1)) {}
 
-  XYIndexRangeIterator& operator++() {
+  //++操作符的重载
+  XYIndexRangeIterator& operator++()
+  {
     // This is a necessary evil. Bounds checking is very expensive and needs to
     // be avoided in production. We have unit tests that exercise this check
     // in debug mode.
     DCHECK(*this != end());
-    if (xy_index_.x() < max_xy_index_.x()) {
+    if (xy_index_.x() < max_xy_index_.x())
+    {
       ++xy_index_.x();
-    } else {
+    }
+    else
+    {
       xy_index_.x() = min_xy_index_.x();
       ++xy_index_.y();
     }
@@ -72,19 +87,23 @@ class XYIndexRangeIterator
 
   Eigen::Array2i& operator*() { return xy_index_; }
 
-  bool operator==(const XYIndexRangeIterator& other) const {
+  bool operator==(const XYIndexRangeIterator& other) const
+  {
     return (xy_index_ == other.xy_index_).all();
   }
 
-  bool operator!=(const XYIndexRangeIterator& other) const {
+  bool operator!=(const XYIndexRangeIterator& other) const
+  {
     return !operator==(other);
   }
 
-  XYIndexRangeIterator begin() {
+  XYIndexRangeIterator begin()
+  {
     return XYIndexRangeIterator(min_xy_index_, max_xy_index_);
   }
 
-  XYIndexRangeIterator end() {
+  XYIndexRangeIterator end()
+  {
     XYIndexRangeIterator it = begin();
     it.xy_index_ = Eigen::Array2i(min_xy_index_.x(), max_xy_index_.y() + 1);
     return it;

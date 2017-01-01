@@ -17,10 +17,10 @@
 #ifndef CARTOGRAPHER_SENSOR_CONFIGURATION_H_
 #define CARTOGRAPHER_SENSOR_CONFIGURATION_H_
 
-#include "Eigen/Geometry"
-#include "cartographer/common/lua_parameter_dictionary.h"
+#include "eigen3/Eigen/Geometry"
+#include "../common/lua_parameter_dictionary.h"
+#include "../transform/rigid_transform.h"
 #include "cartographer/sensor/proto/configuration.pb.h"
-#include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace sensor {

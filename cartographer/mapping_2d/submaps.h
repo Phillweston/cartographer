@@ -20,20 +20,26 @@
 #include <memory>
 #include <vector>
 
-#include "Eigen/Core"
-#include "cartographer/common/lua_parameter_dictionary.h"
+#include "eigen3/Eigen/Core"
+#include "../common/lua_parameter_dictionary.h"
+
+#include "../mapping/submaps.h"
+#include "../mapping/trajectory_node.h"
+#include "../mapping_2d/laser_fan_inserter.h"
+#include "../mapping_2d/map_limits.h"
+#include "../mapping_2d/probability_grid.h"
+#include "../sensor/laser.h"
+#include "../transform/rigid_transform.h"
+
 #include "cartographer/mapping/proto/submaps.pb.h"
-#include "cartographer/mapping/submaps.h"
-#include "cartographer/mapping/trajectory_node.h"
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
-#include "cartographer/mapping_2d/map_limits.h"
-#include "cartographer/mapping_2d/probability_grid.h"
 #include "cartographer/mapping_2d/proto/submaps_options.pb.h"
-#include "cartographer/sensor/laser.h"
-#include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping_2d {
+
+/*
+ * submap的数据结构定义．一个submap里面，包含一定数量的laserscan
+*/
 
 ProbabilityGrid ComputeCroppedProbabilityGrid(
     const ProbabilityGrid& probability_grid);
@@ -41,15 +47,23 @@ ProbabilityGrid ComputeCroppedProbabilityGrid(
 proto::SubmapsOptions CreateSubmapsOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
-struct Submap : public mapping::Submap {
+/*
+ * submap的数据结构
+*/
+struct Submap : public mapping::Submap
+{
   Submap(const MapLimits& limits, const Eigen::Vector2f& origin,
          int begin_laser_fan_index);
 
+  //submap对应的覆盖栅格地图
   ProbabilityGrid probability_grid;
 };
 
-// A container of Submaps.
-class Submaps : public mapping::Submaps {
+// A container of Submap.
+// submap的容器　里面包含很多的数据结构
+// 这个继承自mapping::Submaps，因此很多函数在父类中实现了
+class Submaps : public mapping::Submaps
+{
  public:
   explicit Submaps(const proto::SubmapsOptions& options);
 

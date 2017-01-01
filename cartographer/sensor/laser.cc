@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "cartographer/sensor/laser.h"
+#include "../sensor/laser.h"
+#include "../transform/transform.h"
 
 #include "cartographer/sensor/proto/sensor.pb.h"
-#include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace sensor {
@@ -66,35 +66,40 @@ LaserFan ToLaserFan(const proto::LaserScan& proto, const float min_range,
 
 LaserFan ProjectCroppedLaserFan(const LaserFan3D& laser_fan,
                                 const Eigen::Vector3f& min,
-                                const Eigen::Vector3f& max) {
+                                const Eigen::Vector3f& max)
+{
   return LaserFan{laser_fan.origin.head<2>(),
                   ProjectToPointCloud2D(Crop(laser_fan.returns, min, max)),
                   ProjectToPointCloud2D(Crop(laser_fan.misses, min, max))};
 }
 
 LaserFan TransformLaserFan(const LaserFan& laser_fan,
-                           const transform::Rigid2f& transform) {
+                           const transform::Rigid2f& transform)
+{
   return LaserFan{
       transform * laser_fan.origin,
       TransformPointCloud2D(laser_fan.point_cloud, transform),
       TransformPointCloud2D(laser_fan.missing_echo_point_cloud, transform)};
 }
 
-LaserFan3D ToLaserFan3D(const LaserFan& laser_fan) {
+LaserFan3D ToLaserFan3D(const LaserFan& laser_fan)
+{
   return LaserFan3D{
       Eigen::Vector3f(laser_fan.origin.x(), laser_fan.origin.y(), 0.),
       ToPointCloud(laser_fan.point_cloud),
       ToPointCloud(laser_fan.missing_echo_point_cloud)};
 }
 
-LaserFan3D Decompress(const CompressedLaserFan3D& compressed_laser_fan) {
+LaserFan3D Decompress(const CompressedLaserFan3D& compressed_laser_fan)
+{
   return LaserFan3D{compressed_laser_fan.origin,
                     compressed_laser_fan.returns.Decompress(),
                     compressed_laser_fan.misses.Decompress(),
                     compressed_laser_fan.reflectivities};
 }
 
-CompressedLaserFan3D Compress(const LaserFan3D& laser_fan) {
+CompressedLaserFan3D Compress(const LaserFan3D& laser_fan)
+{
   std::vector<int> new_to_old;
   CompressedPointCloud compressed_returns =
       CompressedPointCloud::CompressAndReturnOrder(laser_fan.returns,
@@ -106,7 +111,8 @@ CompressedLaserFan3D Compress(const LaserFan3D& laser_fan) {
 }
 
 LaserFan3D TransformLaserFan3D(const LaserFan3D& laser_fan,
-                               const transform::Rigid3f& transform) {
+                               const transform::Rigid3f& transform)
+{
   return LaserFan3D{
       transform * laser_fan.origin,
       TransformPointCloud(laser_fan.returns, transform),
@@ -115,7 +121,8 @@ LaserFan3D TransformLaserFan3D(const LaserFan3D& laser_fan,
   };
 }
 
-proto::LaserFan3D ToProto(const LaserFan3D& laser_fan) {
+proto::LaserFan3D ToProto(const LaserFan3D& laser_fan)
+{
   proto::LaserFan3D proto;
   *proto.mutable_origin() = transform::ToProto(laser_fan.origin);
   *proto.mutable_point_cloud() = ToProto(laser_fan.returns);
@@ -125,7 +132,8 @@ proto::LaserFan3D ToProto(const LaserFan3D& laser_fan) {
   return proto;
 }
 
-LaserFan3D FromProto(const proto::LaserFan3D& proto) {
+LaserFan3D FromProto(const proto::LaserFan3D& proto)
+{
   auto laser_fan_3d = LaserFan3D{
       transform::ToEigen(proto.origin()), ToPointCloud(proto.point_cloud()),
       ToPointCloud(proto.missing_echo_point_cloud()),
@@ -135,11 +143,18 @@ LaserFan3D FromProto(const proto::LaserFan3D& proto) {
   return laser_fan_3d;
 }
 
+/*
+ * 对激光帧数据进行滤波，只保留测量范围在max_range范围内的点．
+ * 那么miss point会被去除，同时反射率信息也会被去除
+*/
 LaserFan3D FilterLaserFanByMaxRange(const LaserFan3D& laser_fan,
-                                    const float max_range) {
+                                    const float max_range)
+{
   LaserFan3D result{laser_fan.origin, {}, {}, {}};
-  for (const Eigen::Vector3f& return_ : laser_fan.returns) {
-    if ((return_ - laser_fan.origin).norm() <= max_range) {
+  for (const Eigen::Vector3f& return_ : laser_fan.returns)
+  {
+    if ((return_ - laser_fan.origin).norm() <= max_range)
+    {
       result.returns.push_back(return_);
     }
   }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/kalman_filter/gaussian_distribution.h"
+#include "./gaussian_distribution.h"
 
 #include "gtest/gtest.h"
 
@@ -22,7 +22,8 @@ namespace cartographer {
 namespace kalman_filter {
 namespace {
 
-TEST(GaussianDistributionTest, testConstructor) {
+TEST(GaussianDistributionTest, testConstructor)
+{
   Eigen::Matrix2d covariance;
   covariance << 1., 2., 3., 4.;
   GaussianDistribution<double, 2> distribution(Eigen::Vector2d(0., 1.),
