@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/ray_casting.h"
+#include "../mapping_2d/ray_casting.h"
 
 namespace cartographer {
 namespace mapping_2d {

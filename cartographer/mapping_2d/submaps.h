@@ -49,13 +49,15 @@ proto::SubmapsOptions CreateSubmapsOptions(
 
 /*
  * submap的数据结构
+ * 里面包含了其他的数据 都在mapping::Submap中。
+ * 包括submap的起点 包含的激光雷达数据。
 */
 struct Submap : public mapping::Submap
 {
   Submap(const MapLimits& limits, const Eigen::Vector2f& origin,
          int begin_laser_fan_index);
 
-  //submap对应的覆盖栅格地图
+  //submap对应的覆盖栅格地图 每次修改都是在
   ProbabilityGrid probability_grid;
 };
 

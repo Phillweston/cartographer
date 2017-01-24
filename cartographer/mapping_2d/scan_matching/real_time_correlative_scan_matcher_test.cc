@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
+#include "../mapping_2d/scan_matching/real_time_correlative_scan_matcher.h"
 
 #include <cmath>
 #include <memory>
 
-#include "Eigen/Geometry"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
-#include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/transform/transform.h"
+#include "eigen3/Eigen/Geometry"
+#include "../common/lua_parameter_dictionary_test_helpers.h"
+#include "../common/make_unique.h"
+#include "../kalman_filter/pose_tracker.h"
+#include "../mapping_2d/laser_fan_inserter.h"
+#include "../mapping_2d/probability_grid.h"
+#include "../sensor/point_cloud.h"
+#include "../transform/transform.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {

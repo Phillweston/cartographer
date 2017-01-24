@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
+#include "../mapping_2d/laser_fan_inserter.h"
 
 #include <memory>
 
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/mapping_2d/probability_grid.h"
+#include "../common/lua_parameter_dictionary.h"
+#include "../common/lua_parameter_dictionary_test_helpers.h"
+#include "../common/make_unique.h"
+#include "../mapping_2d/probability_grid.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {

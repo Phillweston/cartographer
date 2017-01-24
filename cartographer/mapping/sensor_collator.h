@@ -23,12 +23,12 @@
 #include <unordered_set>
 #include <utility>
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/common/ordered_multi_queue.h"
-#include "cartographer/common/time.h"
-#include "cartographer/sensor/sensor_packet_period_histogram_builder.h"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Geometry"
+#include "../common/make_unique.h"
+#include "../common/ordered_multi_queue.h"
+#include "../common/time.h"
+#include "../sensor/sensor_packet_period_histogram_builder.h"
 #include "glog/logging.h"
 
 namespace cartographer {

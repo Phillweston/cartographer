@@ -17,10 +17,10 @@
 #ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTOR_H_
 #define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_OCCUPIED_SPACE_COST_FUNCTOR_H_
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/sensor/point_cloud.h"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Geometry"
+#include "../mapping_2d/probability_grid.h"
+#include "../sensor/point_cloud.h"
 #include "ceres/ceres.h"
 #include "ceres/cubic_interpolation.h"
 

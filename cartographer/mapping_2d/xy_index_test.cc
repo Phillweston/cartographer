@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/xy_index.h"
+#include "../mapping_2d/xy_index.h"
 
 #include "gtest/gtest.h"
 
@@ -22,7 +22,8 @@ namespace cartographer {
 namespace mapping_2d {
 namespace {
 
-TEST(XYIndexTest, XYIndexRangeIterator) {
+TEST(XYIndexTest, XYIndexRangeIterator)
+{
   const Eigen::Array2i min(1, 2);
   const Eigen::Array2i max(3, 4);
   XYIndexRangeIterator it(min, max);
@@ -30,7 +31,8 @@ TEST(XYIndexTest, XYIndexRangeIterator) {
   EXPECT_TRUE((Eigen::Array2i(1, 5) == *it.end()).all()) << *it.end();
   EXPECT_TRUE((min == *it).all()) << *it;
   int num_indices = 0;
-  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(min, max)) {
+  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(min, max))
+  {
     LOG(INFO) << xy_index;
     EXPECT_TRUE((xy_index >= min).all());
     EXPECT_TRUE((xy_index <= max).all());

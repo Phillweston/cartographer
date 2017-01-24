@@ -21,13 +21,13 @@
 #include <map>
 #include <vector>
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/port.h"
-#include "cartographer/mapping/sparse_pose_graph.h"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Geometry"
+#include "../common/lua_parameter_dictionary.h"
+#include "../common/port.h"
+#include "../mapping/sparse_pose_graph.h"
+#include "../mapping_2d/submaps.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
-#include "cartographer/mapping_2d/submaps.h"
 
 namespace cartographer {
 namespace mapping_2d {

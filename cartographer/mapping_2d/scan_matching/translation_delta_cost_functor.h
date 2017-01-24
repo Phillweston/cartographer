@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_TRANSLATION_DELTA_COST_FUNCTOR_H_
 #define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_TRANSLATION_DELTA_COST_FUNCTOR_H_
 
-#include "Eigen/Core"
+#include "eigen3/Eigen/Core"
 
 namespace cartographer {
 namespace mapping_2d {

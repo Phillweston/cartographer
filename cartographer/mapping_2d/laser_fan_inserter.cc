@@ -14,30 +14,34 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
+#include "../mapping_2d/laser_fan_inserter.h"
 
 #include <cstdlib>
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "cartographer/mapping_2d/ray_casting.h"
-#include "cartographer/mapping_2d/xy_index.h"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Geometry"
+#include "../mapping_2d/ray_casting.h"
+#include "../mapping_2d/xy_index.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping_2d {
 
 proto::LaserFanInserterOptions CreateLaserFanInserterOptions(
-    common::LuaParameterDictionary* const parameter_dictionary) {
+    common::LuaParameterDictionary* const parameter_dictionary)
+{
   proto::LaserFanInserterOptions options;
   options.set_hit_probability(
       parameter_dictionary->GetDouble("hit_probability"));
+
   options.set_miss_probability(
       parameter_dictionary->GetDouble("miss_probability"));
+
   options.set_insert_free_space(
       parameter_dictionary->HasKey("insert_free_space")
           ? parameter_dictionary->GetBool("insert_free_space")
           : true);
+
   CHECK_GT(options.hit_probability(), 0.5);
   CHECK_LT(options.miss_probability(), 0.5);
   return options;
@@ -51,8 +55,15 @@ LaserFanInserter::LaserFanInserter(
       miss_table_(mapping::ComputeLookupTableToApplyOdds(
           mapping::Odds(options.miss_probability()))) {}
 
+/**
+ * @brief LaserFanInserter::Insert
+ * 执行插入的函数 这里面会调用RayCast算法来进行地图的更新
+ * @param laser_fan
+ * @param probability_grid
+ */
 void LaserFanInserter::Insert(const sensor::LaserFan& laser_fan,
-                              ProbabilityGrid* const probability_grid) const {
+                              ProbabilityGrid* const probability_grid) const
+{
   CHECK_NOTNULL(probability_grid)->StartUpdate();
 
   // By not starting a new update after hits are inserted, we give hits priority

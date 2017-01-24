@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/sparse_pose_graph/constraint_builder.h"
+#include "../mapping_2d/sparse_pose_graph/constraint_builder.h"
 
 #include <cmath>
 #include <functional>
@@ -25,14 +25,15 @@
 #include <sstream>
 #include <string>
 
-#include "Eigen/Eigenvalues"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/common/math.h"
-#include "cartographer/common/thread_pool.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
+#include "eigen3/Eigen/Eigenvalues"
+#include "../common/make_unique.h"
+#include "../common/math.h"
+#include "../common/thread_pool.h"
+#include "../kalman_filter/pose_tracker.h"
+#include "../transform/transform.h"
+
 #include "cartographer/mapping_2d/scan_matching/proto/ceres_scan_matcher_options.pb.h"
 #include "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
-#include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {

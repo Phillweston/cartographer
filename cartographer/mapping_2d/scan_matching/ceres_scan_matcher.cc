@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
+#include "../mapping_2d/scan_matching/ceres_scan_matcher.h"
 
 #include <utility>
 #include <vector>
 
-#include "Eigen/Core"
-#include "cartographer/common/ceres_solver_options.h"
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
-#include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/scan_matching/occupied_space_cost_functor.h"
-#include "cartographer/mapping_2d/scan_matching/rotation_delta_cost_functor.h"
-#include "cartographer/mapping_2d/scan_matching/translation_delta_cost_functor.h"
-#include "cartographer/transform/transform.h"
+#include "eigen3/Eigen/Core"
+#include "../common/ceres_solver_options.h"
+#include "../common/lua_parameter_dictionary.h"
+#include "../kalman_filter/pose_tracker.h"
+#include "../mapping_2d/probability_grid.h"
+#include "../mapping_2d/scan_matching/occupied_space_cost_functor.h"
+#include "../mapping_2d/scan_matching/rotation_delta_cost_functor.h"
+#include "../mapping_2d/scan_matching/translation_delta_cost_functor.h"
+#include "../transform/transform.h"
 #include "ceres/ceres.h"
 #include "glog/logging.h"
 

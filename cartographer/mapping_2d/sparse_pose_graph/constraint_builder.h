@@ -23,23 +23,26 @@
 #include <limits>
 #include <vector>
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "cartographer/common/fixed_ratio_sampler.h"
-#include "cartographer/common/histogram.h"
-#include "cartographer/common/math.h"
-#include "cartographer/common/mutex.h"
-#include "cartographer/common/thread_pool.h"
-#include "cartographer/mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
-#include "cartographer/mapping/trajectory_connectivity.h"
-#include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
-#include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
-#include "cartographer/mapping_2d/sparse_pose_graph/optimization_problem.h"
-#include "cartographer/mapping_2d/submaps.h"
-#include "cartographer/mapping_3d/scan_matching/ceres_scan_matcher.h"
-#include "cartographer/mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/sensor/voxel_filter.h"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Geometry"
+#include "../common/fixed_ratio_sampler.h"
+#include "../common/histogram.h"
+#include "../common/math.h"
+#include "../common/mutex.h"
+#include "../common/thread_pool.h"
+#include "../mapping/trajectory_connectivity.h"
+#include "../mapping_2d/scan_matching/ceres_scan_matcher.h"
+#include "../mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
+#include "../mapping_2d/sparse_pose_graph/optimization_problem.h"
+#include "../mapping_2d/submaps.h"
+#include "../mapping_3d/scan_matching/ceres_scan_matcher.h"
+#include "../mapping_3d/scan_matching/fast_correlative_scan_matcher.h"
+#include "../sensor/point_cloud.h"
+#include "../sensor/voxel_filter.h"
+
+#include "../mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
+
+
 
 namespace cartographer {
 namespace mapping_2d {
@@ -57,7 +60,8 @@ transform::Rigid2d ComputeSubmapPose(const mapping::Submap& submap);
 // MaybeAdd(Global)Constraint()/WhenDone() cycle can follow.
 //
 // This class is thread-safe.
-class ConstraintBuilder {
+class ConstraintBuilder
+{
  public:
   using Constraint = mapping::SparsePoseGraph::Constraint2D;
   using Result = std::vector<Constraint>;
@@ -110,7 +114,8 @@ class ConstraintBuilder {
   int GetNumFinishedScans();
 
  private:
-  struct SubmapScanMatcher {
+  struct SubmapScanMatcher
+  {
     const ProbabilityGrid* probability_grid;
     std::unique_ptr<scan_matching::FastCorrelativeScanMatcher>
         fast_correlative_scan_matcher;

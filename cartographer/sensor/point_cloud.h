@@ -19,41 +19,50 @@
 
 #include <vector>
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Geometry"
+#include "../transform/rigid_transform.h"
 #include "cartographer/sensor/proto/sensor.pb.h"
-#include "cartographer/transform/rigid_transform.h"
 #include "glog/logging.h"
 
-namespace cartographer {
-namespace sensor {
+namespace cartographer
+{
+namespace sensor
+{
 
 typedef std::vector<Eigen::Vector3f> PointCloud;
 typedef std::vector<Eigen::Vector2f> PointCloud2D;
 
 // Transforms 'point_cloud' according to 'transform'.
+// 把PointCloud经过一个转换矩阵transform转换到另一个电晕
 PointCloud TransformPointCloud(const PointCloud& point_cloud,
                                const transform::Rigid3f& transform);
 
 // Transforms 'point_cloud_2d' according to 'transform'.
+// 用旋转矩阵转换2d point cloud
 PointCloud2D TransformPointCloud2D(const PointCloud2D& point_cloud_2d,
                                    const transform::Rigid2f& transform);
 
 // Converts 'point_cloud_2d' to a 3D point cloud.
+// 把2d point cloud 转化为 3d point cloud
 PointCloud ToPointCloud(const PointCloud2D& point_cloud_2d);
 
 // Converts 'point_cloud' to a 2D point cloud by removing the z component.
+// 把3d point cloud 转换为 2d point cloud
 PointCloud2D ProjectToPointCloud2D(const PointCloud& point_cloud);
 
 // Returns a new point cloud without points that fall outside the axis-aligned
 // cuboid defined by 'min' and 'max'.
+// 只保留min & max之间的 point cloud
 PointCloud Crop(const PointCloud& point_cloud, const Eigen::Vector3f& min,
                 const Eigen::Vector3f& max);
 
 // Converts 'point_cloud' to a proto::PointCloud.
+// 把point_cloud 转换为proto::PointCloud
 proto::PointCloud ToProto(const PointCloud& point_cloud);
 
 // Converts 'proto' to a PointCloud.
+// 把proto::PointCloud 转换为 point_cloud
 PointCloud ToPointCloud(const proto::PointCloud& proto);
 
 }  // namespace sensor

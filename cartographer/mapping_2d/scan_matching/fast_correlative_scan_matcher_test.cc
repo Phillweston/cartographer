@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
+#include "../mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
 
 #include <algorithm>
 #include <cmath>
@@ -22,11 +22,11 @@
 #include <random>
 #include <string>
 
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
-#include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/transform/rigid_transform_test_helpers.h"
-#include "cartographer/transform/transform.h"
+#include "../common/lua_parameter_dictionary_test_helpers.h"
+#include "../mapping_2d/laser_fan_inserter.h"
+#include "../mapping_2d/probability_grid.h"
+#include "../transform/rigid_transform_test_helpers.h"
+#include "../transform/transform.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/sparse_pose_graph.h"
+#include "../mapping_2d/sparse_pose_graph.h"
 
 #include <algorithm>
 #include <cmath>
@@ -27,14 +27,15 @@
 #include <sstream>
 #include <string>
 
-#include "Eigen/Eigenvalues"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/common/math.h"
-#include "cartographer/common/time.h"
+#include "eigen3/Eigen/Eigenvalues"
+#include "../common/make_unique.h"
+#include "../common/math.h"
+#include "../common/time.h"
+#include "../sensor/compressed_point_cloud.h"
+#include "../sensor/voxel_filter.h"
 #include "cartographer/mapping/proto/scan_matching_progress.pb.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
-#include "cartographer/sensor/compressed_point_cloud.h"
-#include "cartographer/sensor/voxel_filter.h"
+
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -49,14 +50,16 @@ SparsePoseGraph::SparsePoseGraph(
       constraint_builder_(options_.constraint_builder_options(), thread_pool),
       constant_node_data_(constant_node_data) {}
 
-SparsePoseGraph::~SparsePoseGraph() {
+SparsePoseGraph::~SparsePoseGraph()
+{
   WaitForAllComputations();
   common::MutexLocker locker(&mutex_);
   CHECK(scan_queue_ == nullptr);
 }
 
 void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
-    const std::vector<const mapping::Submap*>& submaps) {
+    const std::vector<const mapping::Submap*>& submaps)
+{cartographer
   CHECK(!submaps.empty());
   CHECK_LT(submap_transforms_.size(), std::numeric_limits<int>::max());
   const int next_transform_index = submap_transforms_.size();
@@ -84,13 +87,38 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
   }
 }
 
+sparse_pose_graph_->AddScan(
+    insertion_result->time,                                             //激光帧的时间
+    insertion_result->tracking_to_tracking_2d,                          //把激光数据转换到平面转换矩阵
+    insertion_result->laser_fan_in_tracking_2d,                         //平面坐标系中的激光数据
+    insertion_result->pose_estimate_2d,                                 //滤波器估计出来的机器人最新位姿
+    kalman_filter::Project2D(insertion_result->covariance_estimate),    //滤波器估计出来的机器人位姿的方差
+    insertion_result->submaps,                                          //所有的submap
+    insertion_result->matching_submap,                                  //本次用来进行scan-match的submap
+    insertion_result->insertion_submaps);                               //插入了激光数据的submap 就是submap(size-1) 和 submap(size-2)
+
+
+/**
+ * @brief SparsePoseGraph::AddScan
+ * @param time                      激光数据对应的时间戳
+ * @param tracking_to_pose          把激光数据转换到平面的转换矩阵 Marglization掉Yaw数据的转换矩阵
+ * @param laser_fan_in_pose         平面的激光数据
+ * @param pose                      滤波器估计的机器人位姿
+ * @param covariance                滤波器估计的机器人位姿的协方差
+ * @param submaps                   所有的submap
+ * @param matching_submap           用来进行scan-matcha操作的submap
+ * @param insertion_submaps         执行了插入操作的submap
+ */
 void SparsePoseGraph::AddScan(
-    common::Time time, const transform::Rigid3d& tracking_to_pose,
-    const sensor::LaserFan& laser_fan_in_pose, const transform::Rigid2d& pose,
+    common::Time time,
+    const transform::Rigid3d& tracking_to_pose,
+    const sensor::LaserFan& laser_fan_in_pose,
+    const transform::Rigid2d& pose,
     const kalman_filter::Pose2DCovariance& covariance,
     const mapping::Submaps* submaps,
     const mapping::Submap* const matching_submap,
-    const std::vector<const mapping::Submap*>& insertion_submaps) {
+    const std::vector<const mapping::Submap*>& insertion_submaps)
+{
   const transform::Rigid3d optimized_pose(GetLocalToGlobalTransform(*submaps) *
                                           transform::Embed3D(pose));
 
@@ -102,12 +130,15 @@ void SparsePoseGraph::AddScan(
       time, laser_fan_in_pose,
       Compress(sensor::LaserFan3D{Eigen::Vector3f::Zero(), {}, {}, {}}),
       submaps, transform::Rigid3d(tracking_to_pose)});
+
   trajectory_nodes_.push_back(mapping::TrajectoryNode{
       &constant_node_data_->back(), optimized_pose,
   });
+
   trajectory_connectivity_.Add(submaps);
 
-  if (submap_indices_.count(insertion_submaps.back()) == 0) {
+  if (submap_indices_.count(insertion_submaps.back()) == 0)
+  {
     submap_indices_.emplace(insertion_submaps.back(),
                             static_cast<int>(submap_indices_.size()));
     submap_states_.emplace_back();
@@ -115,13 +146,15 @@ void SparsePoseGraph::AddScan(
     submap_states_.back().trajectory = submaps;
     CHECK_EQ(submap_states_.size(), submap_indices_.size());
   }
+
   const mapping::Submap* const finished_submap =
       insertion_submaps.front()->finished_probability_grid != nullptr
           ? insertion_submaps.front()
           : nullptr;
 
   // Make sure we have a sampler for this trajectory.
-  if (!global_localization_samplers_[submaps]) {
+  if (!global_localization_samplers_[submaps])
+  {
     global_localization_samplers_[submaps] =
         common::make_unique<common::FixedRatioSampler>(
             options_.global_sampling_ratio());

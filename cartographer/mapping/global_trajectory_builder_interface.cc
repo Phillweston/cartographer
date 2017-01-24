@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
+#include "../mapping/global_trajectory_builder_interface.h"
 
 namespace cartographer {
 namespace mapping {

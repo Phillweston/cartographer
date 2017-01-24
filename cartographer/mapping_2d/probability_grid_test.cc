@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/probability_grid.h"
+#include "../mapping_2d/probability_grid.h"
 
 #include <random>
 

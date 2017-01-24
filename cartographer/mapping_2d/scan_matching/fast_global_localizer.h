@@ -19,9 +19,9 @@
 
 #include <vector>
 
-#include "Eigen/Geometry"
-#include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
-#include "cartographer/sensor/voxel_filter.h"
+#include "eigen3/Eigen/Geometry"
+#include "../mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
+#include "../sensor/voxel_filter.h"
 
 namespace cartographer {
 namespace mapping_2d {

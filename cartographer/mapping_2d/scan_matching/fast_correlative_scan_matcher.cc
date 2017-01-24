@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
+#include "../mapping_2d/scan_matching/fast_correlative_scan_matcher.h"
 
 #include <algorithm>
 #include <cmath>
@@ -22,11 +22,11 @@
 #include <functional>
 #include <limits>
 
-#include "Eigen/Geometry"
-#include "cartographer/common/math.h"
-#include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/transform/transform.h"
+#include "eigen3/Eigen/Geometry"
+#include "../common/math.h"
+#include "../mapping_2d/probability_grid.h"
+#include "../sensor/point_cloud.h"
+#include "../transform/transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {

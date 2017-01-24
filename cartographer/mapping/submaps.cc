@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/submaps.h"
+#include "../mapping/submaps.h"
 
 #include <vector>
 
-#include "cartographer/common/port.h"
-#include "cartographer/transform/transform.h"
+#include "../common/port.h"
+#include "../transform/transform.h"
 
 namespace cartographer {
 namespace mapping {
@@ -30,15 +30,33 @@ Submaps::Submaps() {}
 
 Submaps::~Submaps() {}
 
-int Submaps::matching_index() const {
-  if (size() > 1) {
+/**
+ * @brief Submaps::matching_index
+ * 返回最近的能被用来做scan-match的submap。
+ * 一般返回size()-2。因为size()-2的submap至少已经构建完成一半了。
+ * 两个submap之间有50%的重合
+ * @return
+ */
+int Submaps::matching_index() const
+{
+  if (size() > 1)
+  {
     return size() - 2;
   }
   return size() - 1;
 }
 
-std::vector<int> Submaps::insertion_indices() const {
-  if (size() > 1) {
+/**
+ * @brief Submaps::insertion_indices
+ * 返回激光在进行插入的时候，哪些submap是需要被插入的。
+ * 两个submap之间有50%的重合,因此实际上每次插入的时候都需要插入最近的两个submap
+ * 所以每次都要返回两个submap
+ * @return
+ */
+std::vector<int> Submaps::insertion_indices() const
+{
+  if (size() > 1)
+  {
     return {size() - 2, size() - 1};
   }
   return {size() - 1};
@@ -47,15 +65,18 @@ std::vector<int> Submaps::insertion_indices() const {
 void Submaps::AddProbabilityGridToResponse(
     const transform::Rigid3d& local_submap_pose,
     const mapping_2d::ProbabilityGrid& probability_grid,
-    proto::SubmapQuery::Response* response) {
+    proto::SubmapQuery::Response* response)
+{
   Eigen::Array2i offset;
   mapping_2d::CellLimits limits;
   probability_grid.ComputeCroppedLimits(&offset, &limits);
 
   string cells;
   for (const Eigen::Array2i& xy_index :
-       mapping_2d::XYIndexRangeIterator(limits)) {
-    if (probability_grid.IsKnown(xy_index + offset)) {
+       mapping_2d::XYIndexRangeIterator(limits))
+  {
+    if (probability_grid.IsKnown(xy_index + offset))
+    {
       // We would like to add 'delta' but this is not possible using a value and
       // alpha. We use premultiplied alpha, so when 'delta' is positive we can
       // add it by setting 'alpha' to zero. If it is negative, we set 'value' to
@@ -69,7 +90,9 @@ void Submaps::AddProbabilityGridToResponse(
       const uint8 value = delta > 0 ? delta : 0;
       cells.push_back(value);
       cells.push_back((value || alpha) ? alpha : 1);
-    } else {
+    }
+    else
+    {
       cells.push_back(static_cast<uint8>(kUnknownLogOdds));  // value
       cells.push_back(0);                                    // alpha
     }

@@ -22,9 +22,9 @@
 #include <iostream>
 #include <iterator>
 
-#include "Eigen/Core"
-#include "cartographer/common/math.h"
-#include "cartographer/common/port.h"
+#include "eigen3/Eigen/Core"
+#include "../common/math.h"
+#include "../common/port.h"
 #include "glog/logging.h"
 
 namespace cartographer {

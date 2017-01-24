@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/sparse_pose_graph.h"
+#include "../mapping_2d/sparse_pose_graph.h"
 
 #include <cmath>
 #include <memory>
 #include <random>
 
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/common/thread_pool.h"
-#include "cartographer/common/time.h"
-#include "cartographer/mapping_2d/laser_fan_inserter.h"
-#include "cartographer/mapping_2d/submaps.h"
-#include "cartographer/transform/rigid_transform.h"
-#include "cartographer/transform/rigid_transform_test_helpers.h"
-#include "cartographer/transform/transform.h"
+#include "../common/lua_parameter_dictionary_test_helpers.h"
+#include "../common/make_unique.h"
+#include "../common/thread_pool.h"
+#include "../common/time.h"
+#include "../mapping_2d/laser_fan_inserter.h"
+#include "../mapping_2d/submaps.h"
+#include "../transform/rigid_transform.h"
+#include "../transform/rigid_transform_test_helpers.h"
+#include "../transform/transform.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {

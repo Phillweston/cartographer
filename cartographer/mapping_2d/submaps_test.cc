@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/submaps.h"
+#include "../mapping_2d/submaps.h"
 
 #include <map>
 #include <string>
 
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/port.h"
-#include "cartographer/transform/transform.h"
+#include "../common/lua_parameter_dictionary.h"
+#include "../common/lua_parameter_dictionary_test_helpers.h"
+#include "../common/port.h"
+#include "../transform/transform.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {

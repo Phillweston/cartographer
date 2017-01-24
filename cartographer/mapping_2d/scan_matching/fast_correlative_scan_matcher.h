@@ -28,12 +28,13 @@
 #include <memory>
 #include <vector>
 
-#include "Eigen/Core"
-#include "cartographer/common/port.h"
-#include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher.h"
+#include "eigen3/Eigen/Core"
+#include "../common/port.h"
+#include "../mapping_2d/probability_grid.h"
+#include "../mapping_2d/scan_matching/correlative_scan_matcher.h"
+#include "../sensor/point_cloud.h"
+
 #include "cartographer/mapping_2d/scan_matching/proto/fast_correlative_scan_matcher_options.pb.h"
-#include "cartographer/sensor/point_cloud.h"
 
 namespace cartographer {
 namespace mapping_2d {

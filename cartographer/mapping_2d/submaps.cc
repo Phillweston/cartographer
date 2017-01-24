@@ -43,7 +43,8 @@ void WriteDebugImage(const string& filename,
   const int height = cell_limits.num_y_cells;
   std::vector<uint8_t> rgb;
   for (const Eigen::Array2i& xy_index : mapping_2d::XYIndexRangeIterator(
-           probability_grid.limits().cell_limits())) {
+           probability_grid.limits().cell_limits()))
+  {
     CHECK(probability_grid.limits().Contains(xy_index));
     const uint8_t value =
         probability_grid.IsKnown(xy_index)
@@ -66,20 +67,40 @@ void WriteDebugImage(const string& filename,
 
 }  // namespace
 
+/**
+ * @brief ComputeCroppedProbabilityGrid
+ * 计算经过裁剪的覆盖栅格地图
+ * 这个函数在FinishSubmap()中被调用。
+ * 在finished一个submap的时候都会对原本的地图进行裁剪。就需要调用这个函数
+ * @param probability_grid  待裁剪的地图
+ * @return 裁剪过后的地图
+ */
 ProbabilityGrid ComputeCroppedProbabilityGrid(
     const ProbabilityGrid& probability_grid)
 {
+  //计算得到最小外接矩形
+  //offset表示起点 limits表示范围
   Eigen::Array2i offset;
   CellLimits limits;
   probability_grid.ComputeCroppedLimits(&offset, &limits);
+
+  //得到分辨率
   const double resolution = probability_grid.limits().resolution();
+
+  //得到物理坐标的范围
   const Eigen::Vector2d max =
       probability_grid.limits().max() -
       resolution * Eigen::Vector2d(offset.y(), offset.x());
+
+  //生成新的覆盖栅格地图
   ProbabilityGrid cropped_grid(MapLimits(resolution, max, limits));
+
+  //对新的覆盖栅格地图进行赋值
   cropped_grid.StartUpdate();
-  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(limits)) {
-    if (probability_grid.IsKnown(xy_index + offset)) {
+  for (const Eigen::Array2i& xy_index : XYIndexRangeIterator(limits))
+  {
+    if (probability_grid.IsKnown(xy_index + offset))
+    {
       cropped_grid.SetProbability(
           xy_index, probability_grid.GetProbability(xy_index + offset));
     }
@@ -111,7 +132,8 @@ Submap::Submap(const MapLimits& limits, const Eigen::Vector2f& origin,
 
 Submaps::Submaps(const proto::SubmapsOptions& options)
     : options_(options),
-      laser_fan_inserter_(options.laser_fan_inserter_options()) {
+      laser_fan_inserter_(options.laser_fan_inserter_options())
+{
   // We always want to have at least one likelihood field which we can return,
   // and will create it at the origin in absence of a better choice.
   AddSubmap(Eigen::Vector2f::Zero());
@@ -126,13 +148,19 @@ void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan)
 {
   CHECK_LT(num_laser_fans_, std::numeric_limits<int>::max());
   ++num_laser_fans_;
+  //枚举所有的需要被插入的submap 实际上就是最近两个submap。因为只有最近两个submap还没有finish
   for (const int index : insertion_indices())
   {
     Submap* submap = submaps_[index].get();
     CHECK(submap->finished_probability_grid == nullptr);
+
     laser_fan_inserter_.Insert(laser_fan, &submap->probability_grid);
+
     submap->end_laser_fan_index = num_laser_fans_;
   }
+
+  //如果最近submap中的激光数量已经满足插入新submap的要求。那么则需要把最近的submap设置为finish。
+  //同时已这帧激光位姿为起点 新建一个submap
   ++num_laser_fans_in_last_submap_;
   if (num_laser_fans_in_last_submap_ == options_.num_laser_fans())
   {
@@ -163,21 +191,36 @@ int Submaps::size() const { return submaps_.size(); }
 void Submaps::SubmapToProto(
     const int index, const std::vector<mapping::TrajectoryNode>&,
     const transform::Rigid3d&,
-    mapping::proto::SubmapQuery::Response* const response) {
+    mapping::proto::SubmapQuery::Response* const response)
+{
   AddProbabilityGridToResponse(Get(index)->local_pose(),
                                Get(index)->probability_grid, response);
 }
 
+/**
+ * @brief Submaps::FinishSubmap
+ * 把下标为Index的submap设置为finish状态。
+ * 为submap的finished_probability_grid赋值。
+ * 这个变量被赋值了之后，表示这个submap已经完成。不会再修改了。
+ * @param index
+ */
 void Submaps::FinishSubmap(int index)
 {
   // Crop the finished Submap before inserting a new Submap to reduce peak
   // memory usage a bit.
   Submap* submap = submaps_[index].get();
   CHECK(submap->finished_probability_grid == nullptr);
+
+  //对覆盖栅格地图进行裁剪
   submap->probability_grid =
       ComputeCroppedProbabilityGrid(submap->probability_grid);
+
+  //finished_probability_grid设置为自身地图。
+  //
   submap->finished_probability_grid = &submap->probability_grid;
-  if (options_.output_debug_images()) {
+
+  if (options_.output_debug_images())
+  {
     // Output the Submap that won't be changed from now on.
     WriteDebugImage("submap" + std::to_string(index) + ".webp",
                     submap->probability_grid);
@@ -186,17 +229,24 @@ void Submaps::FinishSubmap(int index)
 
 /**
  * @brief Submaps::AddSubmap
- * 增加一个submap
+ * 增加一个submap.由于每次都有且只能有2个submap来进行更新。
+ * 因此增加一个submap的同时也必须finished一个submap
+ * 一个submap里面的激光数量为options_.num_laser_fans()*2.
  * @param origin    新增加的submap的原点
  */
 void Submaps::AddSubmap(const Eigen::Vector2f& origin)
 {
-  if (size() > 1) {
+  //到了新增submap的时候，首先要把size()-2的submap来finished掉。
+  //因此这个时候说明size()-2的submap里面的激光数据已经有options_.num_laser_fans()*2了.
+  if (size() > 1)
+  {
     FinishSubmap(size() - 2);
   }
   const int num_cells_per_dimension =
       common::RoundToInt(2. * options_.half_length() / options_.resolution()) +
       1;
+
+  //新建一个submap。并且push到submaps中
   submaps_.push_back(common::make_unique<Submap>(
       MapLimits(options_.resolution(),
                 origin.cast<double>() +

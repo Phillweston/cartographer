@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/probability_values.h"
+#include "../mapping/probability_values.h"
 
 namespace cartographer {
 namespace mapping {

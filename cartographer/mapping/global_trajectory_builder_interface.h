@@ -21,11 +21,11 @@
 #include <memory>
 #include <string>
 
-#include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
-#include "cartographer/mapping/submaps.h"
-#include "cartographer/sensor/laser.h"
-#include "cartographer/sensor/point_cloud.h"
+#include "../common/time.h"
+#include "../kalman_filter/pose_tracker.h"
+#include "../mapping/submaps.h"
+#include "../sensor/laser.h"
+#include "../sensor/point_cloud.h"
 
 namespace cartographer {
 namespace mapping {

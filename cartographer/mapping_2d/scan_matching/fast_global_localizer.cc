@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/fast_global_localizer.h"
+#include "../mapping_2d/scan_matching/fast_global_localizer.h"
 
 #include "glog/logging.h"
 

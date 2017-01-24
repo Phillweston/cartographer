@@ -20,18 +20,20 @@
 #include <deque>
 #include <vector>
 
-#include "Eigen/Core"
-#include "cartographer/common/time.h"
-#include "cartographer/sensor/laser.h"
-#include "cartographer/transform/rigid_transform.h"
+#include "eigen3/Eigen/Core"
+#include "../common/time.h"
+#include "../sensor/laser.h"
+#include "../transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping {
 
 struct Submaps;
 
-struct TrajectoryNode {
-  struct ConstantData {
+struct TrajectoryNode
+{
+  struct ConstantData
+  {
     common::Time time;
 
     // LaserFan in 'pose' frame. Only used in the 2D case.
@@ -61,7 +63,8 @@ struct TrajectoryNode {
 // Users will only be interested in 'trajectory_nodes'. But 'constant_data'
 // is referenced by 'trajectory_nodes'. This struct guarantees that their
 // lifetimes are bound.
-struct TrajectoryNodes {
+struct TrajectoryNodes
+{
   std::deque<mapping::TrajectoryNode::ConstantData> constant_data;
   std::vector<mapping::TrajectoryNode> trajectory_nodes;
 };

@@ -40,9 +40,9 @@
 #include <memory>
 #include <vector>
 
-#include "Eigen/Core"
-#include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/mapping_2d/scan_matching/correlative_scan_matcher.h"
+#include "eigen3/Eigen/Core"
+#include "../mapping_2d/probability_grid.h"
+#include "../mapping_2d/scan_matching/correlative_scan_matcher.h"
 #include "cartographer/mapping_2d/scan_matching/proto/real_time_correlative_scan_matcher_options.pb.h"
 
 namespace cartographer {

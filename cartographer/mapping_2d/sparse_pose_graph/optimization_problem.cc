@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/sparse_pose_graph/optimization_problem.h"
+#include "../mapping_2d/sparse_pose_graph/optimization_problem.h"
 
 #include <array>
 #include <cmath>
@@ -23,10 +23,10 @@
 #include <string>
 #include <vector>
 
-#include "cartographer/common/ceres_solver_options.h"
-#include "cartographer/common/histogram.h"
-#include "cartographer/common/math.h"
-#include "cartographer/transform/transform.h"
+#include "../common/ceres_solver_options.h"
+#include "../common/histogram.h"
+#include "../common/math.h"
+#include "../transform/transform.h"
 #include "ceres/ceres.h"
 #include "glog/logging.h"
 

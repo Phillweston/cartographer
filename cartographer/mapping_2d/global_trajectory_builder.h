@@ -25,9 +25,9 @@ namespace cartographer {
 namespace mapping_2d {
 
 /*
- * 总的类，在这里面会调用其他的定义的东西．
+ * 总的类，在这里面会调用其他文件中定义的东西．
  * 在ros里面使用的时候，也只需要定义这个类的实例就可以
- * 这里面有localbuildtrajectorybuilder来进行submap的构建．
+ * 这里面有local_trajectory_builder来进行submap的构建．
  * 以及sparse_pose_graph来进行闭环检测和全局优化
 */
 class GlobalTrajectoryBuilder
@@ -47,9 +47,12 @@ class GlobalTrajectoryBuilder
   const mapping::GlobalTrajectoryBuilderInterface::PoseEstimate& pose_estimate()
       const override;
 
+  //调用local_trajectory_builder的相应函数来进行激光帧的插入。
+  //插入成功之后会调用sparse_pose_graph的AddScan()来进行回环检测和后端优化
   void AddHorizontalLaserFan(common::Time time,
                              const sensor::LaserFan3D& laser_fan) override;
 
+  //里面主要调用local_trajectory_builder的对应的函数来进行滤波器的更新
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
 

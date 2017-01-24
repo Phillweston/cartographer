@@ -19,11 +19,11 @@
 
 #include <vector>
 
-#include "Eigen/Core"
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping_2d/map_limits.h"
-#include "cartographer/mapping_2d/xy_index.h"
-#include "cartographer/sensor/point_cloud.h"
+#include "eigen3/Eigen/Core"
+#include "../common/lua_parameter_dictionary.h"
+#include "../mapping_2d/map_limits.h"
+#include "../mapping_2d/xy_index.h"
+#include "../sensor/point_cloud.h"
 
 namespace cartographer {
 namespace mapping_2d {
@@ -32,9 +32,11 @@ namespace scan_matching {
 typedef std::vector<Eigen::Array2i> DiscreteScan;
 
 // Describes the search space.
-struct SearchParameters {
+struct SearchParameters
+{
   // Linear search window in pixel offsets; bounds are inclusive.
-  struct LinearBounds {
+  struct LinearBounds
+  {
     int min_x;
     int max_x;
     int min_y;
@@ -71,7 +73,8 @@ std::vector<DiscreteScan> DiscretizeScans(
     const Eigen::Translation2f& initial_translation);
 
 // A possible solution.
-struct Candidate {
+struct Candidate
+{
   Candidate(const int init_scan_index, const int init_x_index_offset,
             const int init_y_index_offset,
             const SearchParameters& search_parameters)

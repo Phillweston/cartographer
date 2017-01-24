@@ -37,7 +37,8 @@ proto::CeresScanMatcherOptions CreateCeresScanMatcherOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
 // Align scans with an existing map using Ceres.
-class CeresScanMatcher {
+class CeresScanMatcher
+{
  public:
   explicit CeresScanMatcher(const proto::CeresScanMatcherOptions& options);
   virtual ~CeresScanMatcher();

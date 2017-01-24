@@ -20,9 +20,9 @@
 #include <map>
 #include <unordered_map>
 
-#include "cartographer/common/mutex.h"
+#include "../common/mutex.h"
+#include "../mapping/submaps.h"
 #include "cartographer/mapping/proto/trajectory_connectivity.pb.h"
-#include "cartographer/mapping/submaps.h"
 
 namespace cartographer {
 namespace mapping {

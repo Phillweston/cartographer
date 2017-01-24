@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/trajectory_connectivity.h"
+#include "../mapping/trajectory_connectivity.h"
 
 #include <algorithm>
 #include <unordered_set>

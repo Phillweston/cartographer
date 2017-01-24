@@ -322,7 +322,7 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
     return nullptr;
   }
 
-  /*得到和激光匹配的submap*/
+  /*得到和激光匹配的submap 即submap(size-2)*/
   const mapping::Submap* const matching_submap =
       submaps_.Get(submaps_.matching_index());
 
@@ -332,7 +332,7 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
     insertion_submaps.push_back(submaps_.Get(insertion_index));
   }
 
-  //把激光插入到submap中．
+  //把激光插入到submaps中．
   submaps_.InsertLaserFan(TransformLaserFan(laser_fan_in_tracking_2d,
                                             pose_estimate_2d.cast<float>()));
 

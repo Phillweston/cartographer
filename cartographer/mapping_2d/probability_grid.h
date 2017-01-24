@@ -55,6 +55,7 @@ class ProbabilityGrid
         min_y_(limits_.cell_limits().num_y_cells - 1) {}
 
   // Returns the limits of this ProbabilityGrid.
+  // 返回地图的参数 包括分辨率 最大物理坐标 最大栅格坐标之类的
   const MapLimits& limits() const { return limits_; }
 
   // Starts the next update sequence.

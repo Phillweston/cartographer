@@ -39,6 +39,8 @@ proto::LaserFanInserterOptions CreateLaserFanInserterOptions(
 
 /*
  * 定义了激光雷达的插入器　用来进行激光雷达数据的插入操作
+ * 可以认为这里面实现的OccupanyGridMapping算法。
+ * 这里调用的Ray-Casting算法来进行地图的更新
 */
 class LaserFanInserter
 {
@@ -49,6 +51,7 @@ class LaserFanInserter
   LaserFanInserter& operator=(const LaserFanInserter&) = delete;
 
   // Inserts 'laser_fan' into 'probability_grid'.
+  // 把一帧激光数据插入到覆盖栅格地图中
   void Insert(const sensor::LaserFan& laser_fan,
               ProbabilityGrid* probability_grid) const;
 

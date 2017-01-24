@@ -22,18 +22,19 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Eigen/Geometry"
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/thread_pool.h"
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
-#include "cartographer/mapping/proto/map_builder_options.pb.h"
-#include "cartographer/mapping/sparse_pose_graph.h"
-#include "cartographer/mapping/trajectory_node.h"
-#include "cartographer/mapping_2d/local_trajectory_builder.h"
-#include "cartographer/mapping_2d/sparse_pose_graph.h"
-#include "cartographer/mapping_2d/submaps.h"
+#include "eigen3/Eigen/Geometry"
+#include "../common/lua_parameter_dictionary.h"
+#include "../common/thread_pool.h"
+#include "../mapping/global_trajectory_builder_interface.h"
+#include "../mapping/sparse_pose_graph.h"
+#include "../mapping/trajectory_node.h"
+#include "../mapping_2d/local_trajectory_builder.h"
+#include "../mapping_2d/sparse_pose_graph.h"
+#include "../mapping_2d/submaps.h"
+#include "../mapping_3d/sparse_pose_graph.h"
+
 #include "cartographer/mapping_3d/proto/local_trajectory_builder_options.pb.h"
-#include "cartographer/mapping_3d/sparse_pose_graph.h"
+#include "cartographer/mapping/proto/map_builder_options.pb.h"
 
 namespace cartographer {
 namespace mapping {

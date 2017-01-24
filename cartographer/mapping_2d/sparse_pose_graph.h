@@ -24,6 +24,13 @@
 // for each match), both poses of scans and of submaps are to be optimized.
 // All constraints are between a submap i and a scan j.
 
+/*
+ * 实现了SPA的优化方法。SPA优化方法可以认为是激光2D Pose Graph的state-of-art方法
+ * 每帧激光数据都会和一个或者多个的submap来进行匹配
+ * 在进行优化的时候，激光帧的位姿和submap的位姿都会被优化。
+ * 但是所有的约束都是用submap来表示的，也就是说pose_graph中的所有pose都是一个submap
+*/
+
 #ifndef CARTOGRAPHER_MAPPING_2D_SPARSE_POSE_GRAPH_H_
 #define CARTOGRAPHER_MAPPING_2D_SPARSE_POSE_GRAPH_H_
 
@@ -34,20 +41,22 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "cartographer/common/fixed_ratio_sampler.h"
-#include "cartographer/common/thread_pool.h"
-#include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Geometry"
+#include "../common/fixed_ratio_sampler.h"
+#include "../common/thread_pool.h"
+#include "../common/time.h"
+#include "../kalman_filter/pose_tracker.h"
+#include "../mapping/sparse_pose_graph.h"
+#include "../mapping/trajectory_connectivity.h"
+#include "../mapping_2d/sparse_pose_graph/constraint_builder.h"
+#include "../mapping_2d/sparse_pose_graph/optimization_problem.h"
+#include "../mapping_2d/submaps.h"
+#include "../sensor/point_cloud.h"
+#include "../transform/transform.h"
+
 #include "cartographer/mapping/proto/scan_matching_progress.pb.h"
-#include "cartographer/mapping/sparse_pose_graph.h"
-#include "cartographer/mapping/trajectory_connectivity.h"
-#include "cartographer/mapping_2d/sparse_pose_graph/constraint_builder.h"
-#include "cartographer/mapping_2d/sparse_pose_graph/optimization_problem.h"
-#include "cartographer/mapping_2d/submaps.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/transform/transform.h"
+
 
 namespace cartographer {
 namespace mapping_2d {
@@ -57,6 +66,7 @@ namespace mapping_2d {
 */
 
 // Implements the SPA loop closure method.
+// 实现了Sparse Pose Adjustment的闭环检测方法
 class SparsePoseGraph : public mapping::SparsePoseGraph
 {
  public:
@@ -83,18 +93,23 @@ class SparsePoseGraph : public mapping::SparsePoseGraph
                const std::vector<const mapping::Submap*>& insertion_submaps)
       EXCLUDES(mutex_);
 
+  //进行最后的优化的，即求解非线性最小二乘函数
   void RunFinalOptimization() override;
+
+
   bool HasNewOptimizedPoses() override;
   mapping::proto::ScanMatchingProgress GetScanMatchingProgress() override;
 
   std::vector<std::vector<const mapping::Submaps*>> GetConnectedTrajectories()
       override;
+
   std::vector<transform::Rigid3d> GetSubmapTransforms(
       const mapping::Submaps& submaps) EXCLUDES(mutex_) override;
 
   transform::Rigid3d GetLocalToGlobalTransform(const mapping::Submaps& submaps)
       EXCLUDES(mutex_) override;
 
+  //返回所有的路径节点 一个路径节点就是一个submap
   std::vector<mapping::TrajectoryNode> GetTrajectoryNodes() override
       EXCLUDES(mutex_);
 
@@ -102,24 +117,35 @@ class SparsePoseGraph : public mapping::SparsePoseGraph
   std::vector<Constraint3D> constraints_3d() override;
 
  private:
-  struct SubmapState {
+  /*
+   * 最近的一个submap的状态
+   */
+  struct SubmapState
+  {
+    //对应的submap
     const mapping::Submap* submap = nullptr;
 
     // Indices of the scans that were inserted into this map together with
     // constraints for them. They are not to be matched again when this submap
     // becomes 'finished'.
+    // 这个submap中对应的激光scan.
+    // 这个submap没有被完成的时候，这些激光scan是不会和新来的激光数据进行匹配的。
     std::set<int> scan_indices;
 
     // Whether in the current state of the background thread this submap is
     // finished. When this transitions to true, all scans are tried to match
     // against this submap. Likewise, all new scans are matched against submaps
     // which are finished.
+    // 指示这个submap是否已经构建完成，如果已经完成，那么新的激光数据都会和这个submap进行匹配。
+    // 如果没构建完成，所有的新的激光数据都会和已经完成的submap进行匹配
     bool finished = false;
 
     // The trajectory to which this SubmapState belongs.
+    // 这个submap属于的轨迹
     const mapping::Submaps* trajectory = nullptr;
   };
 
+  //得到对应submap的下标
   int GetSubmapIndex(const mapping::Submap* submap) const REQUIRES(mutex_)
   {
     const auto iterator = submap_indices_.find(submap);

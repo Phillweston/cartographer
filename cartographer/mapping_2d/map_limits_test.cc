@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/map_limits.h"
+#include "../mapping_2d/map_limits.h"
 
 #include "gtest/gtest.h"
 
@@ -36,7 +36,8 @@ TEST(MapLimitsTest, ConstructAndGet) {
   EXPECT_EQ(42., limits.resolution());
 }
 
-TEST(MapLimitsTest, ComputeMapLimits) {
+TEST(MapLimitsTest, ComputeMapLimits)
+{
   const mapping::TrajectoryNode::ConstantData constant_data{
       common::FromUniversal(52),
       sensor::LaserFan{

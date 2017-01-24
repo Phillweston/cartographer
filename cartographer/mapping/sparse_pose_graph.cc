@@ -14,45 +14,61 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/sparse_pose_graph.h"
+#include "../mapping/sparse_pose_graph.h"
 
 #include <unordered_map>
 
-#include "cartographer/mapping/sparse_pose_graph/constraint_builder.h"
-#include "cartographer/mapping/sparse_pose_graph/optimization_problem_options.h"
+#include "../mapping/sparse_pose_graph/constraint_builder.h"
+#include "../mapping/sparse_pose_graph/optimization_problem_options.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace mapping {
 
+/**
+ * @brief SplitTrajectoryNodes
+ * 根据轨迹节点的ID来把一条轨迹分解成很多条轨迹
+ * @param trajectory_nodes
+ * @return
+ */
 std::vector<std::vector<TrajectoryNode>> SplitTrajectoryNodes(
-    const std::vector<TrajectoryNode>& trajectory_nodes) {
-  std::vector<std::vector<TrajectoryNode>> trajectories;
-  std::unordered_map<const mapping::Submaps*, int> trajectory_ids;
-  for (const auto& node : trajectory_nodes) {
-    const auto* trajectory = node.constant_data->trajectory;
-    if (trajectory_ids.emplace(trajectory, trajectories.size()).second) {
-      trajectories.push_back({node});
-    } else {
-      trajectories[trajectory_ids[trajectory]].push_back(node);
+                                             const std::vector<TrajectoryNode>& trajectory_nodes)
+{
+    std::vector<std::vector<TrajectoryNode>> trajectories;
+    std::unordered_map<const mapping::Submaps*, int> trajectory_ids;
+    for (const auto& node : trajectory_nodes)
+    {
+        const auto* trajectory = node.constant_data->trajectory;
+        if (trajectory_ids.emplace(trajectory, trajectories.size()).second)
+        {
+            trajectories.push_back({node});
+        }
+        else
+        {
+            trajectories[trajectory_ids[trajectory]].push_back(node);
+        }
     }
-  }
-  return trajectories;
+    return trajectories;
 }
 
 proto::SparsePoseGraphOptions CreateSparsePoseGraphOptions(
-    common::LuaParameterDictionary* const parameter_dictionary) {
+    common::LuaParameterDictionary* const parameter_dictionary)
+{
   proto::SparsePoseGraphOptions options;
   options.set_optimize_every_n_scans(
       parameter_dictionary->GetInt("optimize_every_n_scans"));
+
   *options.mutable_constraint_builder_options() =
       sparse_pose_graph::CreateConstraintBuilderOptions(
           parameter_dictionary->GetDictionary("constraint_builder").get());
+
   *options.mutable_optimization_problem_options() =
       mapping::sparse_pose_graph::CreateOptimizationProblemOptions(
           parameter_dictionary->GetDictionary("optimization_problem").get());
+
   options.set_max_num_final_iterations(
       parameter_dictionary->GetNonNegativeInt("max_num_final_iterations"));
+
   CHECK_GT(options.max_num_final_iterations(), 0);
   options.set_global_sampling_ratio(
       parameter_dictionary->GetDouble("global_sampling_ratio"));

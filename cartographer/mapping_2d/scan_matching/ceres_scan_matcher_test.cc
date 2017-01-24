@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping_2d/scan_matching/ceres_scan_matcher.h"
+#include "../mapping_2d/scan_matching/ceres_scan_matcher.h"
 
 #include <memory>
 
-#include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
-#include "cartographer/common/make_unique.h"
-#include "cartographer/mapping_2d/probability_grid.h"
-#include "cartographer/sensor/point_cloud.h"
-#include "cartographer/transform/rigid_transform_test_helpers.h"
+#include "../common/lua_parameter_dictionary.h"
+#include "../common/lua_parameter_dictionary_test_helpers.h"
+#include "../common/make_unique.h"
+#include "../mapping_2d/probability_grid.h"
+#include "../sensor/point_cloud.h"
+#include "../transform/rigid_transform_test_helpers.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
