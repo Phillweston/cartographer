@@ -27,8 +27,8 @@ namespace cartographer {
 namespace mapping_2d {
 namespace scan_matching {
 
-// Perform global localization against the provided 'matchers'. The 'cutoff'
-// specifies the minimum correlation that will be accepted.
+// Perform global localization against the provided 'matchers'.
+// The 'cutoff' specifies the minimum correlation that will be accepted.
 // This function does not take ownership of the pointers passed in
 // 'matchers'; they are passed as a vector of raw pointers to give maximum
 // flexibility to callers.
@@ -36,6 +36,23 @@ namespace scan_matching {
 // Returns true in the case of successful localization. The output parameters
 // should not be trusted if the function returns false. The 'cutoff' and
 // 'best_score' are in the range [0.0, 1.0].
+// 用来进行全局定位的函数
+// 基本功能就是和地图中的每一个submap进行匹配。如果能匹配上则全局定位成功。
+// 否则全局定位失败
+// 每一个submap都和一个FastCorrelativeScanMatcher绑定在一起。
+// 因此传入的直接就是FastCorrelativeScanMatcher
+//
+/**
+ * @brief PerformGlobalLocalization
+ * 用来进行全局定位的函数
+ * @param cutoff                接受定位成功的阈值
+ * @param voxel_filter          网格滤波器
+ * @param matchers              submap对应的FastCorrelativeScanMatcher
+ * @param point_cloud           用来定位的激光数据
+ * @param best_pose_estimate    估计出来的最好的位姿
+ * @param best_score            估计出来的位姿对应的分数
+ * @return
+ */
 bool PerformGlobalLocalization(
     float cutoff, const cartographer::sensor::AdaptiveVoxelFilter& voxel_filter,
     const std::vector<

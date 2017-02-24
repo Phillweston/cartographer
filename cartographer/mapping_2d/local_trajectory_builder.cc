@@ -133,7 +133,7 @@ sensor::LaserFan LocalTrajectoryBuilder::BuildProjectedLaserFan(
  * @param time                          对应的时间
  * @param pose_prediction               滤波器预测的机器人的位姿
  * @param tracking_to_tracking_2d       tracking坐标系到tracking_2d坐标系的转换矩阵
- * @param laser_fan_in_tracking_2d      tracking_2d坐标系中的激光数据
+ * @param laser_fan_in_tracking_2d      tracking_2d坐标系中的激光数据 tracking_2d坐标系表示平面机器人坐标系
  * @param pose_observation              返回的机器人位姿
  * @param covariance_observation        返回的机器人位姿的方差
  */
@@ -163,7 +163,7 @@ void LocalTrajectoryBuilder::ScanMatch(
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.adaptive_voxel_filter_options());
 
-  //对激光雷达数据进行滤波
+  //对激光雷达数据进行滤波 & 转换成点云数据  这里的点云数据是在平面机器人坐标系中
   const sensor::PointCloud2D filtered_point_cloud_in_tracking_2d =
       adaptive_voxel_filter.Filter(laser_fan_in_tracking_2d.point_cloud);
 
@@ -263,6 +263,7 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
 
   //通过上面计算出来的没有yaw轴的旋转矩阵，把激光雷达投影到2d平面
   //laser_fan_in_tracking_2d表示原始激光雷达投影到2d平面之后的激光数据
+  //这里的数据还是在机器人坐标系中
   const sensor::LaserFan laser_fan_in_tracking_2d =
       BuildProjectedLaserFan(tracking_to_tracking_2d.cast<float>(), laser_fan);
 

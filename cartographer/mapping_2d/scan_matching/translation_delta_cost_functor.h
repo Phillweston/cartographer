@@ -25,7 +25,8 @@ namespace scan_matching {
 
 // Computes the cost of translating the initial pose estimate. Cost increases
 // with the solution's distance from the initial estimate.
-class TranslationDeltaCostFunctor {
+class TranslationDeltaCostFunctor
+{
  public:
   // Constructs a new TranslationDeltaCostFunctor from the given
   // 'initial_pose_estimate' (x, y, theta).
@@ -41,7 +42,8 @@ class TranslationDeltaCostFunctor {
       delete;
 
   template <typename T>
-  bool operator()(const T* const pose, T* residual) const {
+  bool operator()(const T* const pose, T* residual) const
+  {
     residual[0] = scaling_factor_ * (pose[0] - x_);
     residual[1] = scaling_factor_ * (pose[1] - y_);
     return true;

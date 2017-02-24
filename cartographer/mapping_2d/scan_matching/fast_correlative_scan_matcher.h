@@ -19,8 +19,16 @@
 //
 // It is similar to the RealTimeCorrelativeScanMatcher but has a different
 // trade-off: Scan matching is faster because more effort is put into the
-// precomputation done for a given map. However, this map is immutable after
+// precomputation done for a given map. However, this map is immutable(不可变的) after
 // construction.
+// 这里实现了对应的论文中第三种方法：Multi-Level Resolution方法。
+// 因此比起RealTimeCorrelativeScanMatcher方法 这里的方法速度要更快。
+// 这里会实现事先几个不同分辨率的地图来加速匹配
+// 由于要事先计算不同分辨率的地图来进行加速，因此每一个FastCorrelativeScanMatcher只能对应一个栅格地图(Probability grid)
+// 如果要换成不同的地图，则要重新定义一个新的FastCorrelativeScanMatcher
+// 可以说每一个FastCorrelativeScanMatcher都和一个栅格地图(Probability Grid)绑定了
+
+
 
 #ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_FAST_CORRELATIVE_SCAN_MATCHER_H_
 #define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_FAST_CORRELATIVE_SCAN_MATCHER_H_
@@ -47,7 +55,10 @@ CreateFastCorrelativeScanMatcherOptions(
 // A precomputed grid that contains in each cell (x0, y0) the maximum
 // probability in the width x width area defined by x0 <= x < x0 + width and
 // y0 <= y < y0.
-class PrecomputationGrid {
+// 这个类表示栅格地图，这个栅格地图是用来加速Multi-Level Resolution来作用的
+// 一般会有好几个不同的分辨率的栅格地图。这个类被PrecomputationGridStack里面引用
+class PrecomputationGrid
+{
  public:
   PrecomputationGrid(const ProbabilityGrid& probability_grid,
                      const CellLimits& limits, int width,
@@ -55,7 +66,9 @@ class PrecomputationGrid {
 
   // Returns a value between 0 and 255 to represent probabilities between
   // kMinProbability and kMaxProbability.
-  int GetValue(const Eigen::Array2i& xy_index) const {
+  // 返回对应下标的CellValue
+  int GetValue(const Eigen::Array2i& xy_index) const
+  {
     const Eigen::Array2i local_xy_index = xy_index - offset_;
     // The static_cast<unsigned> is for performance to check with 2 comparisons
     // xy_index.x() < offset_.x() || xy_index.y() < offset_.y() ||
@@ -65,7 +78,8 @@ class PrecomputationGrid {
     if (static_cast<unsigned>(local_xy_index.x()) >=
             static_cast<unsigned>(wide_limits_.num_x_cells) ||
         static_cast<unsigned>(local_xy_index.y()) >=
-            static_cast<unsigned>(wide_limits_.num_y_cells)) {
+            static_cast<unsigned>(wide_limits_.num_y_cells))
+    {
       return 0;
     }
     const int stride = wide_limits_.num_x_cells;
@@ -73,13 +87,16 @@ class PrecomputationGrid {
   }
 
   // Maps values from [0, 255] to [kMinProbability, kMaxProbability].
-  static float ToProbability(float value) {
+  // 把CellValue转换为占用概率
+  static float ToProbability(float value)
+  {
     return mapping::kMinProbability +
            value *
                ((mapping::kMaxProbability - mapping::kMinProbability) / 255.f);
   }
 
  private:
+  //把占用概率转换为CellValue
   uint8 ComputeCellValue(float probability) const;
 
   // Offset of the precomputation grid in relation to the 'probability_grid'
@@ -87,16 +104,21 @@ class PrecomputationGrid {
   const Eigen::Array2i offset_;
 
   // Size of the precomputation grid.
+  // 地图的大小
   const CellLimits wide_limits_;
 
   // Probabilites mapped to 0 to 255.
+  // 地图的数据
   std::vector<uint8> cells_;
 };
 
+//用来存储一系列不同分辨率的PrecomputationGrid
 class PrecomputationGridStack;
 
 // An implementation of "Real-Time Correlative Scan Matching" by Olson.
-class FastCorrelativeScanMatcher {
+// 实现了论文中的多分辨率匹配方法(Muiti-Level Resolution)
+class FastCorrelativeScanMatcher
+{
  public:
   FastCorrelativeScanMatcher(
       const ProbabilityGrid& probability_grid,
@@ -111,6 +133,9 @@ class FastCorrelativeScanMatcher {
   // 'initial_pose_estimate'. If a score above 'min_score' (excluding equality)
   // is possible, true is returned, and 'score' and 'pose_estimate' are updated
   // with the result.
+  // 在规定的搜索窗口中来进行匹配 注意每次进行调用的时候，这里面的地图都是已经固定的了。
+  // 在RealTimeCorrelativeScanMatcher里面，在进行Match函数调用的时候，会传入地图。
+  // 但是在这里面是不行的。因为要计算多分辨率地图，这个是事先计算好的。
   bool Match(const transform::Rigid2d& initial_pose_estimate,
              const sensor::PointCloud2D& point_cloud, float min_score,
              float* score, transform::Rigid2d* pose_estimate) const;
@@ -119,6 +144,7 @@ class FastCorrelativeScanMatcher {
   // restricted to the configured search window. If a score above 'min_score'
   // (excluding equality) is possible, true is returned, and 'score' and
   // 'pose_estimate' are updated with the result.
+  // 和整个submap来进行匹配，而不是局限在规定的搜索窗口
   bool MatchFullSubmap(const sensor::PointCloud2D& point_cloud, float min_score,
                        float* score, transform::Rigid2d* pose_estimate) const;
 
@@ -131,15 +157,19 @@ class FastCorrelativeScanMatcher {
       const transform::Rigid2d& initial_pose_estimate,
       const sensor::PointCloud2D& point_cloud, float min_score, float* score,
       transform::Rigid2d* pose_estimate) const;
+
   std::vector<Candidate> ComputeLowestResolutionCandidates(
       const std::vector<DiscreteScan>& discrete_scans,
       const SearchParameters& search_parameters) const;
+
   std::vector<Candidate> GenerateLowestResolutionCandidates(
       const SearchParameters& search_parameters) const;
+
   void ScoreCandidates(const PrecomputationGrid& precomputation_grid,
                        const std::vector<DiscreteScan>& discrete_scans,
                        const SearchParameters& search_parameters,
                        std::vector<Candidate>* const candidates) const;
+
   Candidate BranchAndBound(const std::vector<DiscreteScan>& discrete_scans,
                            const SearchParameters& search_parameters,
                            const std::vector<Candidate>& candidates,

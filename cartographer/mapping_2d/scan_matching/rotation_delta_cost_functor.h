@@ -26,7 +26,8 @@ namespace scan_matching {
 
 // Computes the cost of rotating the initial pose estimate. Cost increases with
 // the solution's distance from the initial estimate.
-class RotationDeltaCostFunctor {
+class RotationDeltaCostFunctor
+{
  public:
   // Constructs a new RotationDeltaCostFunctor for the given 'angle'.
   explicit RotationDeltaCostFunctor(const double scaling_factor,
@@ -37,7 +38,8 @@ class RotationDeltaCostFunctor {
   RotationDeltaCostFunctor& operator=(const RotationDeltaCostFunctor&) = delete;
 
   template <typename T>
-  bool operator()(const T* const pose, T* residual) const {
+  bool operator()(const T* const pose, T* residual) const
+  {
     residual[0] = scaling_factor_ * (pose[2] - angle_);
     return true;
   }

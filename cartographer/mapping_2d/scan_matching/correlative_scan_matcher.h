@@ -17,6 +17,12 @@
 #ifndef CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CORRELATIVE_SCAN_MATCHER_H_
 #define CARTOGRAPHER_MAPPING_2D_SCAN_MATCHING_CORRELATIVE_SCAN_MATCHER_H_
 
+// 这里面实现的函数和数据结构都是真正的real-time correlative scan match做辅助的。
+// 这个类里面本身没有scan-match的函数。
+// 这里面的函数和数据结构都是为了real_time_correlative_scan_matcher & fast_correlative_scan_matcher写的。
+// 这里面的函数也会在real_time_correlative_scan_matcher里面被调用
+// real_time_correlative_scan_matcher实现的是论文Real-Time Correlative Scan Match中的Computing 2D Slices方法
+// fast_correlative_scan_matcher实现的是论文Real-Time Correlative Scan Match中的Multi-Level Resolution方法
 #include <vector>
 
 #include "eigen3/Eigen/Core"
@@ -35,6 +41,7 @@ typedef std::vector<Eigen::Array2i> DiscreteScan;
 struct SearchParameters
 {
   // Linear search window in pixel offsets; bounds are inclusive.
+  // 地图中的线性搜索串口
   struct LinearBounds
   {
     int min_x;
@@ -54,25 +61,28 @@ struct SearchParameters
   void ShrinkToFit(const std::vector<DiscreteScan>& scans,
                    const CellLimits& cell_limits);
 
-  int num_angular_perturbations;
-  double angular_perturbation_step_size;
-  double resolution;
-  int num_scans;
-  std::vector<LinearBounds> linear_bounds;  // Per rotated scans.
+  int num_angular_perturbations;            //角度搜索一半范围的步长
+  double angular_perturbation_step_size;    //角度的搜索步长
+  double resolution;                        //占用栅格地图的分辨率
+  int num_scans;                            //rotated scan的数量
+  std::vector<LinearBounds> linear_bounds;  //每个rotated scan都要有一个对应的linear_bound Per rotated scans.
 };
 
 // Generates a collection of rotated scans.
+// 生成一系列的经过各个角度旋转的激光雷达数据
 std::vector<sensor::PointCloud2D> GenerateRotatedScans(
     const sensor::PointCloud2D& point_cloud,
     const SearchParameters& search_parameters);
 
 // Translates and discretizes the rotated scans into a vector of integer
 // indices.
+// 把rotate scan平移到世界坐标系中 & 进行离散化得到地图坐标
 std::vector<DiscreteScan> DiscretizeScans(
     const MapLimits& map_limits, const std::vector<sensor::PointCloud2D>& scans,
     const Eigen::Translation2f& initial_translation);
 
 // A possible solution.
+// 进行scan-match时候的一个可行解 或者说是 一个搜索节点
 struct Candidate
 {
   Candidate(const int init_scan_index, const int init_x_index_offset,
@@ -87,18 +97,22 @@ struct Candidate
                     search_parameters.angular_perturbation_step_size) {}
 
   // Index into the rotated scans vector.
+  // 属于第多少个旋转的下表
   int scan_index = 0;
 
   // Linear offset from the initial pose.
+  // 离初始位置的线性位移
   int x_index_offset = 0;
   int y_index_offset = 0;
 
   // Pose of this Candidate relative to the initial pose.
+  // 这个可行解相对于初始位置的位姿 (物理坐标)
   double x = 0.;
   double y = 0.;
   double orientation = 0.;
 
   // Score, higher is better.
+  // 该可行解的得分
   float score = 0.f;
 
   bool operator<(const Candidate& other) const { return score < other.score; }
