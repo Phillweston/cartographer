@@ -87,6 +87,8 @@ class ProbabilityGrid
   //
   // If this is the first call to ApplyOdds() for the specified cell, its value
   // will be set to probability corresponding to 'odds'.
+  // 进行地图更新xy_index表示一系列的点的坐标　来表示哪些栅格要更新
+  //
   bool ApplyLookupTable(const Eigen::Array2i& xy_index,
                         const std::vector<uint16>& table)
   {
@@ -97,9 +99,14 @@ class ProbabilityGrid
     {
       return false;
     }
+
+    //存储下来所有要更新的栅格的坐标
     update_indices_.push_back(cell_index);
     cell = table[cell];
+
     DCHECK_GE(cell, mapping::kUpdateMarker);
+
+    //更新地图的边界
     UpdateBounds(xy_index);
     return true;
   }

@@ -35,7 +35,8 @@ void TrajectoryConnectivity::Add(const Submaps* trajectory) {
 }
 
 void TrajectoryConnectivity::Connect(const Submaps* trajectory_a,
-                                     const Submaps* trajectory_b) {
+                                     const Submaps* trajectory_b)
+{
   CHECK(trajectory_a != nullptr);
   CHECK(trajectory_b != nullptr);
   common::MutexLocker locker(&lock_);
@@ -46,7 +47,8 @@ void TrajectoryConnectivity::Connect(const Submaps* trajectory_a,
 }
 
 void TrajectoryConnectivity::Union(const Submaps* const trajectory_a,
-                                   const Submaps* const trajectory_b) {
+                                   const Submaps* const trajectory_b)
+{
   forest_.emplace(trajectory_a, trajectory_a);
   forest_.emplace(trajectory_b, trajectory_b);
   const Submaps* const representative_a = FindSet(trajectory_a);
@@ -55,10 +57,12 @@ void TrajectoryConnectivity::Union(const Submaps* const trajectory_a,
 }
 
 const Submaps* TrajectoryConnectivity::FindSet(
-    const Submaps* const trajectory) {
+    const Submaps* const trajectory)
+{
   auto it = forest_.find(trajectory);
   CHECK(it != forest_.end());
-  if (it->first != it->second) {
+  if (it->first != it->second)
+  {
     it->second = FindSet(it->second);
   }
   return it->second;

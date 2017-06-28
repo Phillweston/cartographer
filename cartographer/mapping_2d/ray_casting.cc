@@ -27,10 +27,14 @@ constexpr int kSubpixelScale = 1000;
 // We divide each pixel in kSubpixelScale x kSubpixelScale subpixels. 'begin'
 // and 'end' are coordinates at subpixel precision. We compute all pixels in
 // which some part of the line segment connecting 'begin' and 'end' lies.
+//　真正的bresenham2d画线算法。这个函数被下面的CastRays调用。
+//  CastRays里面的函数变量实际上是在这里面使用的。
 void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
-             const std::function<void(const Eigen::Array2i&)>& visitor) {
+             const std::function<void(const Eigen::Array2i&)>& visitor)
+{
   // For simplicity, we order 'begin' and 'end' by their x coordinate.
-  if (begin.x() > end.x()) {
+  if (begin.x() > end.x())
+  {
     CastRay(end, begin, visitor);
     return;
   }
@@ -41,11 +45,14 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 
   // Special case: We have to draw a vertical line in full pixels, as 'begin'
   // and 'end' have the same full pixel x coordinate.
-  if (begin.x() / kSubpixelScale == end.x() / kSubpixelScale) {
+  if (begin.x() / kSubpixelScale == end.x() / kSubpixelScale)
+  {
     Eigen::Array2i current(begin.x() / kSubpixelScale,
                            std::min(begin.y(), end.y()) / kSubpixelScale);
+
     const int end_y = std::max(begin.y(), end.y()) / kSubpixelScale;
-    for (; current.y() <= end_y; ++current.y()) {
+    for (; current.y() <= end_y; ++current.y())
+    {
       visitor(current);
     }
     return;
@@ -84,20 +91,25 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 
   // Move from 'begin' to the next pixel border to the right.
   sub_y += dy * first_pixel;
-  if (dy > 0) {
-    while (true) {
+  if (dy > 0)
+  {
+    while (true)
+    {
       visitor(current);
-      while (sub_y > denominator) {
+      while (sub_y > denominator)
+      {
         sub_y -= denominator;
         ++current.y();
         visitor(current);
       }
       ++current.x();
-      if (sub_y == denominator) {
+      if (sub_y == denominator)
+      {
         sub_y -= denominator;
         ++current.y();
       }
-      if (current.x() == end_x) {
+      if (current.x() == end_x)
+      {
         break;
       }
       // Move from one pixel border to the next.
@@ -106,7 +118,8 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
     // Move from the pixel border on the right to 'end'.
     sub_y += dy * last_pixel;
     visitor(current);
-    while (sub_y > denominator) {
+    while (sub_y > denominator)
+    {
       sub_y -= denominator;
       ++current.y();
       visitor(current);
@@ -117,26 +130,31 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
   }
 
   // Same for lines non-ascending in y coordinates.
-  while (true) {
+  while (true)
+  {
     visitor(current);
-    while (sub_y < 0) {
+    while (sub_y < 0)
+    {
       sub_y += denominator;
       --current.y();
       visitor(current);
     }
     ++current.x();
-    if (sub_y == 0) {
+    if (sub_y == 0)
+    {
       sub_y += denominator;
       --current.y();
     }
-    if (current.x() == end_x) {
+    if (current.x() == end_x)
+    {
       break;
     }
     sub_y += dy * 2 * kSubpixelScale;
   }
   sub_y += dy * last_pixel;
   visitor(current);
-  while (sub_y < 0) {
+  while (sub_y < 0)
+  {
     sub_y += denominator;
     --current.y();
     visitor(current);
@@ -147,35 +165,49 @@ void CastRay(const Eigen::Array2i& begin, const Eigen::Array2i& end,
 
 }  // namespace
 
+//进行栅格地图构建的时候需要用到的raytrace，基本算法为bresenham2d算法．
+//这个函数传入的参数 有两个是函数变量
+//这里面会调用真正的bresenham2d算法 CastRay()
+//这里面的函数成员变量hit_visitor 和 miss_visitor也是在castRay()中发挥作用的
 void CastRays(const sensor::LaserFan& laser_fan, const MapLimits& limits,
               const std::function<void(const Eigen::Array2i&)>& hit_visitor,
-              const std::function<void(const Eigen::Array2i&)>& miss_visitor) {
+              const std::function<void(const Eigen::Array2i&)>& miss_visitor)
+{
   const double superscaled_resolution = limits.resolution() / kSubpixelScale;
+
   const MapLimits superscaled_limits(
       superscaled_resolution, limits.max(),
       CellLimits(limits.cell_limits().num_x_cells * kSubpixelScale,
                  limits.cell_limits().num_y_cells * kSubpixelScale));
+
   const Eigen::Array2i begin =
       superscaled_limits.GetXYIndexOfCellContainingPoint(laser_fan.origin.x(),
                                                          laser_fan.origin.y());
 
   // Compute and add the end points.
+  // 计算激光雷达数据集中的坐标点　这里会调用hit_visitor函数来进行地图更新
   std::vector<Eigen::Array2i> ends;
   ends.reserve(laser_fan.point_cloud.size());
-  for (const Eigen::Vector2f& laser_return : laser_fan.point_cloud) {
+  for (const Eigen::Vector2f& laser_return : laser_fan.point_cloud)
+  {
     ends.push_back(superscaled_limits.GetXYIndexOfCellContainingPoint(
         laser_return.x(), laser_return.y()));
+
     hit_visitor(ends.back() / kSubpixelScale);
   }
 
   // Now add the misses.
-  for (const Eigen::Array2i& end : ends) {
+  // 计算激光雷达数据经过的空闲点　这里面会调用miss_visitor函数进行地图更新。
+  for (const Eigen::Array2i& end : ends)
+  {
     CastRay(begin, end, miss_visitor);
   }
 
   // Finally, compute and add empty rays based on missing echos in the scan.
+  // 那些击中了空气的激光帧数据也会被用来计算freespace
   for (const Eigen::Vector2f& missing_echo :
-       laser_fan.missing_echo_point_cloud) {
+       laser_fan.missing_echo_point_cloud)
+  {
     CastRay(begin, superscaled_limits.GetXYIndexOfCellContainingPoint(
                        missing_echo.x(), missing_echo.y()),
             miss_visitor);

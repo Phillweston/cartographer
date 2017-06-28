@@ -27,7 +27,9 @@
 namespace cartographer {
 namespace mapping {
 
-inline float Odds(float probability) {
+//把概率转换成odd的形式
+inline float Odds(float probability)
+{
   return probability / (1.f - probability);
 }
 
@@ -39,15 +41,20 @@ constexpr float kMinProbability = 0.1f;
 constexpr float kMaxProbability = 1.f - kMinProbability;
 
 // Clamps probability to be in the range [kMinProbability, kMaxProbability].
-inline float ClampProbability(const float probability) {
+inline float ClampProbability(const float probability)
+{
   return common::Clamp(probability, kMinProbability, kMaxProbability);
 }
 
+//unknown对应的value
 constexpr uint16 kUnknownProbabilityValue = 0;
+//32768
 constexpr uint16 kUpdateMarker = 1u << 15;
 
 // Converts a probability to a uint16 in the [1, 32767] range.
-inline uint16 ProbabilityToValue(const float probability) {
+// 把概率转换到[1,32767]
+inline uint16 ProbabilityToValue(const float probability)
+{
   const int value =
       common::RoundToInt((ClampProbability(probability) - kMinProbability) *
                          (32766.f / (kMaxProbability - kMinProbability))) +

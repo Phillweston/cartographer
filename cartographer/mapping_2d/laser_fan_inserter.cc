@@ -52,6 +52,7 @@ LaserFanInserter::LaserFanInserter(
     : options_(options),
       hit_table_(mapping::ComputeLookupTableToApplyOdds(
           mapping::Odds(options.hit_probability()))),
+
       miss_table_(mapping::ComputeLookupTableToApplyOdds(
           mapping::Odds(options.miss_probability()))) {}
 
@@ -69,13 +70,17 @@ void LaserFanInserter::Insert(const sensor::LaserFan& laser_fan,
   // By not starting a new update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
   CastRays(laser_fan, probability_grid->limits(),
+
+           //传入的这个函数的函数体就是调用probability_grid->ApplyLookupTable()
            [this, &probability_grid](const Eigen::Array2i& hit) {
              probability_grid->ApplyLookupTable(hit, hit_table_);
            },
+
+           //传入的这个函数的函数体就是调用probability_grid->ApplyLookupTable()来进行地图更新
            [this, &probability_grid](const Eigen::Array2i& miss) {
              if (options_.insert_free_space()) {
                probability_grid->ApplyLookupTable(miss, miss_table_);
-             }
+             } 
            });
 }
 

@@ -221,6 +221,7 @@ class SparsePoseGraph : public mapping::SparsePoseGraph
 
   // Submaps get assigned an index and state as soon as they are seen, even
   // before they take part in the background computations.
+  // 用来给submap分配下标的数据结构 每个submap都会被分配一个下标
   std::map<const mapping::Submap*, int> submap_indices_ GUARDED_BY(mutex_);
   std::vector<SubmapState> submap_states_ GUARDED_BY(mutex_);
 

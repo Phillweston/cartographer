@@ -33,10 +33,14 @@ namespace cartographer {
 namespace mapping_2d {
 namespace scan_matching {
 
+//参数配置
 proto::RealTimeCorrelativeScanMatcherOptions
 CreateRealTimeCorrelativeScanMatcherOptions(
-    common::LuaParameterDictionary* const parameter_dictionary) {
+    common::LuaParameterDictionary* const parameter_dictionary)
+{
   proto::RealTimeCorrelativeScanMatcherOptions options;
+
+  //CSM来进行搜索的窗口的大小
   options.set_linear_search_window(
       parameter_dictionary->GetDouble("linear_search_window"));
   options.set_angular_search_window(
@@ -72,6 +76,7 @@ RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchCandidates(
 {
   //计算 一共有多少的candidates。即三层循环中一共要计算多少次score
   //相当于num_scans*num_linear_x_candidates*num_linear_y_candidates
+  //这里的num_scans表示一共由多少的角度搜索次数
   int num_candidates = 0;
   for (int scan_index = 0; scan_index != search_parameters.num_scans;
        ++scan_index)
@@ -116,6 +121,8 @@ RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchCandidates(
 /**
  * @brief RealTimeCorrelativeScanMatcher::Match
  * 实现的是RealTime CSM论文里面的方法:Computing 2D Slices
+ * 这里并没有进行多分辨率地图的构建　因此这里实际上就是进行枚举而已。
+ * 并没有进行什么高级的加速策略
  * 用来进行scan-match来优化机器人的位姿
  * @param initial_pose_estimate         初始的机器人的位姿
  * @param point_cloud                   位于平面机器人坐标系中的点云数据

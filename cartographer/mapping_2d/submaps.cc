@@ -147,6 +147,8 @@ Submaps::Submaps(const proto::SubmapsOptions& options)
 void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan)
 {
   CHECK_LT(num_laser_fans_, std::numeric_limits<int>::max());
+
+  //激光数据的id
   ++num_laser_fans_;
   //枚举所有的需要被插入的submap 实际上就是最近两个submap。因为只有最近两个submap还没有finish
   for (const int index : insertion_indices())
@@ -160,6 +162,8 @@ void Submaps::InsertLaserFan(const sensor::LaserFan& laser_fan)
   }
 
   //如果最近submap中的激光数量已经满足插入新submap的要求。那么则需要把最近的submap设置为finish。
+  //因为最近的submap，size()-1,的激光雷达数据达到了options_.num_laser_fans()就需要把size()-2设置为完成。
+  //所以一个submap中的激光帧的数量为options_.num_laser_fans()*2。
   //同时已这帧激光位姿为起点 新建一个submap
   ++num_laser_fans_in_last_submap_;
   if (num_laser_fans_in_last_submap_ == options_.num_laser_fans())
@@ -238,10 +242,13 @@ void Submaps::AddSubmap(const Eigen::Vector2f& origin)
 {
   //到了新增submap的时候，首先要把size()-2的submap来finished掉。
   //因此这个时候说明size()-2的submap里面的激光数据已经有options_.num_laser_fans()*2了.
+  //注意！！！！如果这个时候只有1个submap的话，那是不能进行finished的，直接增加一个地图就可以了。
   if (size() > 1)
   {
     FinishSubmap(size() - 2);
   }
+
+  //地图的cellsize大小
   const int num_cells_per_dimension =
       common::RoundToInt(2. * options_.half_length() / options_.resolution()) +
       1;
@@ -253,6 +260,7 @@ void Submaps::AddSubmap(const Eigen::Vector2f& origin)
                     options_.half_length() * Eigen::Vector2d::Ones(),
                 CellLimits(num_cells_per_dimension, num_cells_per_dimension)),
       origin, num_laser_fans_));
+
   LOG(INFO) << "Added submap " << size();
   num_laser_fans_in_last_submap_ = 0;
 }

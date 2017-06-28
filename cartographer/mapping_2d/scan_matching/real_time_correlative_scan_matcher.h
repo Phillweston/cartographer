@@ -35,6 +35,7 @@
 //
 //
 // 实际上这个类中实现的算法是论文Real-Time Correlative Scan Matching中的第二种方法:Computing 2D Slices
+// 注意这个类主要用来做激光SLAM前端的scan-match。进行回环检测的时候会使用fast_correlative_scan-match方法来做。
 //
 //
 

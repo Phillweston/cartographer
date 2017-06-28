@@ -33,7 +33,13 @@ namespace mapping {
 // connected trajectories i and j?") and the transitive connectivity.
 //
 // This class is thread-safe.
-class TrajectoryConnectivity {
+//
+//用来追踪轨迹之间的连同性。
+//
+//
+//
+class TrajectoryConnectivity
+{
  public:
   TrajectoryConnectivity();
 
@@ -41,6 +47,7 @@ class TrajectoryConnectivity {
   TrajectoryConnectivity& operator=(const TrajectoryConnectivity&) = delete;
 
   // Add a trajectory which is initially connected to nothing.
+  // 增加一个没有任何连接的轨迹
   void Add(const Submaps* trajectory) EXCLUDES(lock_);
 
   // Connect two trajectories. If either trajectory is untracked, it will be

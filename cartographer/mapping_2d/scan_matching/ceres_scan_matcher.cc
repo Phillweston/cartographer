@@ -31,6 +31,15 @@
 #include "ceres/ceres.h"
 #include "glog/logging.h"
 
+
+/*
+ * 用优化的方式进行scan-match。也就是说这里是用梯度下降的方式来进行scan-match
+ * 因此这里的作用实际上和gmapping的hill-climb方法是差不多的。
+ * 这种局部优化的方法很容易陷入到局部极小值当中。因此这个方法能正常工作的前提是初始值离全局最优值比较近。
+ * 因此这个方法一般是用作其他方法的优化。
+ * 比如在cartographer中　在调用这个方法之前，首先会用CSM方法来进行搜索出来一个初值，然后再用这个优化的方法来进行优化
+*/
+
 namespace cartographer {
 namespace mapping_2d {
 namespace scan_matching {
@@ -70,7 +79,8 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
                              const ProbabilityGrid& probability_grid,
                              transform::Rigid2d* const pose_estimate,
                              kalman_filter::Pose2DCovariance* const covariance,
-                             ceres::Solver::Summary* const summary) const {
+                             ceres::Solver::Summary* const summary) const
+{
   double ceres_pose_estimate[3] = {initial_pose_estimate.translation().x(),
                                    initial_pose_estimate.translation().y(),
                                    initial_pose_estimate.rotation().angle()};

@@ -82,6 +82,7 @@ struct Submap
         begin_laser_fan_index(begin_laser_fan_index),
         end_laser_fan_index(begin_laser_fan_index) {}
 
+  // 返回submap的起点
   transform::Rigid3d local_pose() const
   {
     return transform::Rigid3d::Translation(origin.cast<double>());

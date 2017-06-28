@@ -109,6 +109,7 @@ void SparsePoseGraph::AddScan(
     const mapping::Submap* const matching_submap,
     const std::vector<const mapping::Submap*>& insertion_submaps)
 {
+  //得到最优pose，
   const transform::Rigid3d optimized_pose(GetLocalToGlobalTransform(*submaps) *
                                           transform::Embed3D(pose));
 
@@ -116,27 +117,33 @@ void SparsePoseGraph::AddScan(
   const int j = trajectory_nodes_.size();
   CHECK_LT(j, std::numeric_limits<int>::max());
 
+  //生成一帧ConstanData 并且存储起来
   constant_node_data_->push_back(mapping::TrajectoryNode::ConstantData{
       time, laser_fan_in_pose,
       Compress(sensor::LaserFan3D{Eigen::Vector3f::Zero(), {}, {}, {}}),
       submaps, transform::Rigid3d(tracking_to_pose)});
 
+  //在上面生成的ConstanData的基础上，生成一个路径节点，并把这个节点保存在轨迹trajectory_nodes_中。
   trajectory_nodes_.push_back(mapping::TrajectoryNode{
       &constant_node_data_->back(), optimized_pose,
   });
 
+
   trajectory_connectivity_.Add(submaps);
 
+  //如果submap(size -1)没有分配下标，则为它分配下表
   if (submap_indices_.count(insertion_submaps.back()) == 0)
   {
     submap_indices_.emplace(insertion_submaps.back(),
                             static_cast<int>(submap_indices_.size()));
     submap_states_.emplace_back();
+
     submap_states_.back().submap = insertion_submaps.back();
     submap_states_.back().trajectory = submaps;
     CHECK_EQ(submap_states_.size(), submap_indices_.size());
   }
 
+  //得到指向submap(size-2)的指针 ，如果submap(size-2)没有完成 则得到一个空指针
   const mapping::Submap* const finished_submap =
       insertion_submaps.front()->finished_probability_grid != nullptr
           ? insertion_submaps.front()
@@ -177,6 +184,17 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
   }
 }
 
+/**
+ * @brief SparsePoseGraph::ComputeConstraintsForScan
+ * 为激光数据帧scan计算约束
+ * @param scan_index            激光数据的下标 也就是代表了激光数据
+ * @param scan_trajectory       所有的submap
+ * @param matching_submap       用来进行scan-match操作的submap
+ * @param insertion_submaps     执行了插入操作的submap 就是submap(size-1) & submap(size-2)。激光数据scan-index被插入到这些submap中
+ * @param finished_submap       如果submap(size-2)已经finished，那就是submap(size-2) 否则就是null
+ * @param pose
+ * @param covariance
+ */
 void SparsePoseGraph::ComputeConstraintsForScan(
     int scan_index, const mapping::Submaps* scan_trajectory,
     const mapping::Submap* matching_submap,
@@ -474,6 +492,11 @@ SparsePoseGraph::GetConnectedTrajectories()
   return connected_components_;
 }
 
+/**
+* @brief SparsePoseGraph::GetSubmapTransforms
+* @param submaps
+* @return
+*/
 std::vector<transform::Rigid3d> SparsePoseGraph::GetSubmapTransforms(
     const mapping::Submaps& submaps)
 {
@@ -481,6 +504,13 @@ std::vector<transform::Rigid3d> SparsePoseGraph::GetSubmapTransforms(
   return ExtrapolateSubmapTransforms(optimized_submap_transforms_, submaps);
 }
 
+/**
+* @brief SparsePoseGraph::ExtrapolateSubmapTransforms
+* 外推submap的转换
+* @param submap_transforms
+* @param submaps
+* @return
+*/
 std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
     const std::vector<transform::Rigid2d>& submap_transforms,
     const mapping::Submaps& submaps) const
@@ -506,11 +536,13 @@ std::vector<transform::Rigid3d> SparsePoseGraph::ExtrapolateSubmapTransforms(
   // Extrapolate to the remaining submaps.
   for (; i < submaps.size(); ++i)
   {
+    //第一个submap认为是原点 所以转换矩阵设置为I
     if (i == 0)
     {
       result.push_back(transform::Rigid3d::Identity());
       continue;
     }
+
     result.push_back(result.back() *
                      submaps.Get(result.size() - 1)->local_pose().inverse() *
                      submaps.Get(result.size())->local_pose());

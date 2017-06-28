@@ -35,6 +35,10 @@ Submaps::~Submaps() {}
  * 返回最近的能被用来做scan-match的submap。
  * 一般返回size()-2。因为size()-2的submap至少已经构建完成一半了。
  * 两个submap之间有50%的重合
+ * 一般来说size()-1肯定是那个完成度小于50%的。
+ * size()-2是完成度大于50%的。
+ * size()-3以及之后的就是构建完成了的。
+ * 所以匹配的时候都用这个完成度大于50%的地图来进行匹配
  * @return
  */
 int Submaps::matching_index() const
@@ -51,10 +55,12 @@ int Submaps::matching_index() const
  * 返回激光在进行插入的时候，哪些submap是需要被插入的。
  * 两个submap之间有50%的重合,因此实际上每次插入的时候都需要插入最近的两个submap
  * 所以每次都要返回两个submap
+ * 因为size()-1和size()-2这两个局部地图都是没有完成的。
  * @return
  */
 std::vector<int> Submaps::insertion_indices() const
 {
+  //如果里面大于1个的话 那就需要插入两个，需要插入
   if (size() > 1)
   {
     return {size() - 2, size() - 1};

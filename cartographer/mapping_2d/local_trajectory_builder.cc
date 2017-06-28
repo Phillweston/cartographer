@@ -145,7 +145,7 @@ void LocalTrajectoryBuilder::ScanMatch(
     transform::Rigid3d* pose_observation,
     kalman_filter::PoseCovariance* covariance_observation)
 {
-  //对应的submap的概率栅格地图
+  //用来进行scan-match对应的submap的概率栅格地图
   const ProbabilityGrid& probability_grid =
       submaps_.Get(submaps_.matching_index())->probability_grid;
 
@@ -172,7 +172,7 @@ void LocalTrajectoryBuilder::ScanMatch(
   {
     //通过csm和滤波器过后的2d平面的　激光雷达数据来进行位姿优化
     //传入预测的初始位姿＼激光雷达数据＼栅格地图
-    //返回一个更好的值
+    //返回一个更好的值initial_ceres_pose
     real_time_correlative_scan_matcher_.Match(
         pose_prediction_2d, filtered_point_cloud_in_tracking_2d,
         probability_grid, &initial_ceres_pose);
@@ -327,6 +327,8 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
   const mapping::Submap* const matching_submap =
       submaps_.Get(submaps_.matching_index());
 
+  //这里得到的要进行插入的submap 这里的进行插入的submap一般由两个
+  //即size()-1和size()-2
   std::vector<const mapping::Submap*> insertion_submaps;
   for (int insertion_index : submaps_.insertion_indices())
   {

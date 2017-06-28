@@ -95,6 +95,7 @@ class Submaps : public mapping::Submaps
   int num_laser_fans_ = 0;
 
   // Number of LaserFans inserted since the last Submap was added.
+  // 最近的submap里面插入的激光帧的数量
   int num_laser_fans_in_last_submap_ = 0;
 };
 
