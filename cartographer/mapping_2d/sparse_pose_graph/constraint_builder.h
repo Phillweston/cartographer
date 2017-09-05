@@ -60,6 +60,8 @@ transform::Rigid2d ComputeSubmapPose(const mapping::Submap& submap);
 // MaybeAdd(Global)Constraint()/WhenDone() cycle can follow.
 //
 // This class is thread-safe.
+// 这个类用来计算两个node之间的约束关系　或者当前的scan和submap之间的约束关系。
+// 可以认为回环检测　就是在这个类里面实现的。MaybeAddGlobalConstraint
 class ConstraintBuilder
 {
  public:

@@ -86,6 +86,8 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
                                    initial_pose_estimate.rotation().angle()};
   ceres::Problem problem;
   CHECK_GT(options_.occupied_space_cost_functor_weight(), 0.);
+
+  //构造残差--栅格
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<OccupiedSpaceCostFunctor, ceres::DYNAMIC,
                                       3>(
@@ -96,6 +98,8 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
           point_cloud.size()),
       nullptr, ceres_pose_estimate);
   CHECK_GT(options_.previous_pose_translation_delta_cost_functor_weight(), 0.);
+
+  //构造残差--平移
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<TranslationDeltaCostFunctor, 2, 3>(
           new TranslationDeltaCostFunctor(
@@ -104,6 +108,8 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
       nullptr, ceres_pose_estimate);
   CHECK_GT(options_.initial_pose_estimate_rotation_delta_cost_functor_weight(),
            0.);
+
+  //构造残差--旋转
   problem.AddResidualBlock(
       new ceres::AutoDiffCostFunction<RotationDeltaCostFunctor, 1,
                                       3>(new RotationDeltaCostFunctor(
@@ -111,19 +117,24 @@ void CeresScanMatcher::Match(const transform::Rigid2d& previous_pose,
           ceres_pose_estimate[2])),
       nullptr, ceres_pose_estimate);
 
+  //求解器
   ceres::Solve(ceres_solver_options_, &problem, summary);
 
+  //优化完毕之后得到的最优位姿
   *pose_estimate = transform::Rigid2d(
       {ceres_pose_estimate[0], ceres_pose_estimate[1]}, ceres_pose_estimate[2]);
 
+  //计算位姿的方差
   ceres::Covariance::Options options;
   ceres::Covariance covariance_computer(options);
   std::vector<std::pair<const double*, const double*>> covariance_blocks;
   covariance_blocks.emplace_back(ceres_pose_estimate, ceres_pose_estimate);
   CHECK(covariance_computer.Compute(covariance_blocks, &problem));
+
   double ceres_covariance[3 * 3];
   covariance_computer.GetCovarianceBlock(ceres_pose_estimate,
                                          ceres_pose_estimate, ceres_covariance);
+
   *covariance = Eigen::Map<kalman_filter::Pose2DCovariance>(ceres_covariance);
   *covariance *= options_.covariance_scale();
 }

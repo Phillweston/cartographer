@@ -149,6 +149,7 @@ void SparsePoseGraph::AddScan(
           ? insertion_submaps.front()
           : nullptr;
 
+  //这下面进行pose-graph的构建　以及　回环检测操作
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[submaps])
   {
@@ -187,6 +188,7 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(
 /**
  * @brief SparsePoseGraph::ComputeConstraintsForScan
  * 为激光数据帧scan计算约束
+ * 同时也会进行回环检测
  * @param scan_index            激光数据的下标 也就是代表了激光数据
  * @param scan_trajectory       所有的submap
  * @param matching_submap       用来进行scan-match操作的submap
@@ -232,13 +234,17 @@ void SparsePoseGraph::ComputeConstraintsForScan(
   }
 
   // Determine if this scan should be globally localized.
+
+  //　接下来进行回环检测
   const bool run_global_localization =
       global_localization_samplers_[scan_trajectory]->Pulse();
 
+  //枚举所有的submap　用当前的scan和所有finished的submap进行匹配来进行回环检测
   CHECK_LT(submap_states_.size(), std::numeric_limits<int>::max());
   const int num_submaps = submap_states_.size();
   for (int submap_index = 0; submap_index != num_submaps; ++submap_index)
   {
+
     if (submap_states_[submap_index].finished)
     {
       CHECK_EQ(submap_states_[submap_index].scan_indices.count(scan_index), 0);

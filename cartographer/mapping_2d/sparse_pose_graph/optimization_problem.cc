@@ -39,13 +39,15 @@ namespace {
 // Converts a pose into the 3 optimization variable format used for Ceres:
 // translation in x and y, followed by the rotation angle representing the
 // orientation.
-std::array<double, 3> FromPose(const transform::Rigid2d& pose) {
+std::array<double, 3> FromPose(const transform::Rigid2d& pose)
+{
   return {{pose.translation().x(), pose.translation().y(),
            pose.normalized_angle()}};
 }
 
 // Converts a pose as represented for Ceres back to an transform::Rigid2d pose.
-transform::Rigid2d ToPose(const std::array<double, 3>& values) {
+transform::Rigid2d ToPose(const std::array<double, 3>& values)
+{
   return transform::Rigid2d({values[0], values[1]}, values[2]);
 }
 
@@ -58,18 +60,23 @@ OptimizationProblem::OptimizationProblem(
 
 OptimizationProblem::~OptimizationProblem() {}
 
-void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
+//设置最大迭代次数
+void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations)
+{
   options_.mutable_ceres_solver_options()->set_max_num_iterations(
       max_num_iterations);
 }
 
+//真正进行求解的求解器　这里就是进行真正的优化操作
 void OptimizationProblem::Solve(
     const std::vector<Constraint>& constraints,
     const std::vector<const mapping::Submaps*>& trajectories,
     const std::vector<transform::Rigid2d>& initial_point_cloud_poses,
     std::vector<transform::Rigid2d>* point_cloud_poses,
-    std::vector<transform::Rigid2d>* submap_transforms) {
-  if (point_cloud_poses->empty()) {
+    std::vector<transform::Rigid2d>* submap_transforms)
+{
+  if (point_cloud_poses->empty())
+  {
     // Nothing to optimize.
     return;
   }
@@ -80,11 +87,13 @@ void OptimizationProblem::Solve(
   // Set the starting point.
   std::vector<std::array<double, 3>> C_submaps(submap_transforms->size());
   std::vector<std::array<double, 3>> C_point_clouds(point_cloud_poses->size());
-  for (size_t i = 0; i != submap_transforms->size(); ++i) {
+  for (size_t i = 0; i != submap_transforms->size(); ++i)
+  {
     C_submaps[i] = FromPose((*submap_transforms)[i]);
     problem.AddParameterBlock(C_submaps[i].data(), 3);
   }
-  for (size_t j = 0; j != point_cloud_poses->size(); ++j) {
+  for (size_t j = 0; j != point_cloud_poses->size(); ++j)
+  {
     C_point_clouds[j] = FromPose((*point_cloud_poses)[j]);
     problem.AddParameterBlock(C_point_clouds[j].data(), 3);
   }
@@ -95,7 +104,8 @@ void OptimizationProblem::Solve(
   // Add cost functions for intra- and inter-submap constraints.
   std::vector<std::pair<Constraint::Tag, ceres::ResidualBlockId>>
       constraints_residual_blocks;
-  for (const Constraint& constraint : constraints) {
+  for (const Constraint& constraint : constraints)
+  {
     CHECK_GE(constraint.i, 0);
     CHECK_LT(constraint.i, submap_transforms->size());
     CHECK_GE(constraint.j, 0);
@@ -128,10 +138,12 @@ void OptimizationProblem::Solve(
   // into 'initial_point_cloud_poses' of the most-recent pose on 'trajectory'.
   std::map<const mapping::Submaps*, int> last_pose_indices;
 
-  for (size_t j = 0; j != point_cloud_poses->size(); ++j) {
+  for (size_t j = 0; j != point_cloud_poses->size(); ++j)
+  {
     const mapping::Submaps* trajectory = trajectories[j];
     // This pose has a predecessor.
-    if (last_pose_indices.count(trajectory) != 0) {
+    if (last_pose_indices.count(trajectory) != 0)
+    {
       const int last_pose_index = last_pose_indices[trajectory];
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<SpaCostFunction, 3, 3, 3>(
@@ -151,19 +163,22 @@ void OptimizationProblem::Solve(
       common::CreateCeresSolverOptions(options_.ceres_solver_options()),
       &problem, &summary);
 
-  if (options_.log_residual_histograms()) {
+  if (options_.log_residual_histograms())
+  {
     common::Histogram intra_submap_xy_residuals;
     common::Histogram intra_submap_theta_residuals;
     common::Histogram inter_submap_xy_residuals;
     common::Histogram inter_submap_theta_residuals;
-    for (auto constraint_residual_block : constraints_residual_blocks) {
+    for (auto constraint_residual_block : constraints_residual_blocks)
+    {
       ceres::Problem::EvaluateOptions options;
       options.apply_loss_function = false;
       options.residual_blocks = {constraint_residual_block.second};
       std::vector<double> residuals;
       problem.Evaluate(options, nullptr, &residuals, nullptr, nullptr);
       CHECK_EQ(3, residuals.size());
-      switch (constraint_residual_block.first) {
+      switch (constraint_residual_block.first)
+      {
         case Constraint::INTRA_SUBMAP:
           intra_submap_xy_residuals.Add(common::Pow2(residuals[0]) +
                                         common::Pow2(residuals[1]));
@@ -189,15 +204,18 @@ void OptimizationProblem::Solve(
       common::CreateCeresSolverOptions(options_.ceres_solver_options()),
       &problem, &summary);
 
-  if (options_.log_solver_summary()) {
+  if (options_.log_solver_summary())
+  {
     LOG(INFO) << summary.FullReport();
   }
 
   // Store the result.
-  for (size_t i = 0; i != submap_transforms->size(); ++i) {
+  for (size_t i = 0; i != submap_transforms->size(); ++i)
+  {
     (*submap_transforms)[i] = ToPose(C_submaps[i]);
   }
-  for (size_t j = 0; j != point_cloud_poses->size(); ++j) {
+  for (size_t j = 0; j != point_cloud_poses->size(); ++j)
+  {
     (*point_cloud_poses)[j] = ToPose(C_point_clouds[j]);
   }
 }

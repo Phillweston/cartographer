@@ -56,6 +56,8 @@ SearchParameters::SearchParameters(const double linear_search_window,
 
   //计算搜索时候的角度步长  计算的原则是当角度步长++的时候，最长的激光的唯一不会超过resolution
   //见论文"Real-Time Loop Closure in 2D LIDAR SLAM"的式6,式7
+  //对于一个６m的激光雷达来说  2.5cm的分辨率 -->angular_step_size = 0.2degree
+  //                         5cm的分辨率 -->angular_step_size = 0.48degree
   angular_perturbation_step_size =
       kSafetyMargin *
       std::acos(1. -
@@ -139,7 +141,7 @@ std::vector<sensor::PointCloud2D> GenerateRotatedScans(
   std::vector<sensor::PointCloud2D> rotated_scans;
   rotated_scans.reserve(search_parameters.num_scans);
 
-  //搜索的角度的起点
+  //搜索的角度的起点 -offset
   double delta_theta = -search_parameters.num_angular_perturbations *
                        search_parameters.angular_perturbation_step_size;
 
@@ -177,6 +179,7 @@ std::vector<DiscreteScan> DiscretizeScans(
   std::vector<DiscreteScan> discrete_scans;
   discrete_scans.reserve(scans.size());
 
+  //all
   for (const sensor::PointCloud2D& scan : scans)
   {
     discrete_scans.emplace_back();

@@ -34,7 +34,9 @@ namespace mapping_2d {
 namespace sparse_pose_graph {
 
 // Implements the SPA loop closure method.
-class OptimizationProblem {
+// 这个类实现了spa的后端优化过程　通过ceres来进行优化的
+class OptimizationProblem
+{
  public:
   using Constraint = mapping::SparsePoseGraph::Constraint2D;
 

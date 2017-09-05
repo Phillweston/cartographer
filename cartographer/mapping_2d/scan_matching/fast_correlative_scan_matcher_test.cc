@@ -49,15 +49,20 @@ TEST(PrecomputationGridTest, CorrectValues) {
   }
 
   std::vector<float> reusable_intermediate_grid;
-  for (const int width : {1, 2, 3, 8}) {
+  for (const int width : {1, 2, 3, 8})
+  {
     PrecomputationGrid precomputation_grid(
         probability_grid, probability_grid.limits().cell_limits(), width,
         &reusable_intermediate_grid);
+
     for (const Eigen::Array2i& xy_index :
-         XYIndexRangeIterator(probability_grid.limits().cell_limits())) {
+         XYIndexRangeIterator(probability_grid.limits().cell_limits()))
+    {
       float max_score = -std::numeric_limits<float>::infinity();
-      for (int y = 0; y != width; ++y) {
-        for (int x = 0; x != width; ++x) {
+      for (int y = 0; y != width; ++y)
+      {
+        for (int x = 0; x != width; ++x)
+        {
           max_score = std::max<float>(
               max_score,
               probability_grid.GetProbability(xy_index + Eigen::Array2i(x, y)));

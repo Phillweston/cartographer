@@ -41,7 +41,7 @@ typedef std::vector<Eigen::Array2i> DiscreteScan;
 struct SearchParameters
 {
   // Linear search window in pixel offsets; bounds are inclusive.
-  // 地图中的线性搜索串口
+  // 地图中的线性搜索窗口　表示的是栅格坐标
   struct LinearBounds
   {
     int min_x;
@@ -50,6 +50,7 @@ struct SearchParameters
     int max_y;
   };
 
+  //设置CSM搜索参数
   SearchParameters(double linear_search_window, double angular_search_window,
                    const sensor::PointCloud2D& point_cloud, double resolution);
 
@@ -58,6 +59,7 @@ struct SearchParameters
                    double angular_perturbation_step_size, double resolution);
 
   // Tightens the search window as much as possible.
+  // 把搜索窗口尽可能的弄小
   void ShrinkToFit(const std::vector<DiscreteScan>& scans,
                    const CellLimits& cell_limits);
 
@@ -97,16 +99,20 @@ struct Candidate
                     search_parameters.angular_perturbation_step_size) {}
 
   // Index into the rotated scans vector.
-  // 属于第多少个旋转的下表
+  // 属于第多少个旋转的旋转
   int scan_index = 0;
 
   // Linear offset from the initial pose.
-  // 离初始位置的线性位移
+  // 离初始位置的线性位移　这个位移是用栅格坐标的　这个跟上面的scan_index是同一个性质的。
+  // 最小的为linearbound.minx,最大为linearbound.maxx
+  // 其中linearbound.minx = - linearbound.maxx
   int x_index_offset = 0;
   int y_index_offset = 0;
 
   // Pose of this Candidate relative to the initial pose.
-  // 这个可行解相对于初始位置的位姿 (物理坐标)
+  // 这个可行解相对于初始位置的位姿 (物理坐标) 把上面的index　转换成物理坐标
+  // 不知道为什么这里的x和y跟上面的下标是反过来的。
+  // 相对于其实解的物理坐标
   double x = 0.;
   double y = 0.;
   double orientation = 0.;

@@ -38,9 +38,15 @@ namespace {
 // A collection of values which can be added and later removed, and the maximum
 // of the current values in the collection can be retrieved.
 // All of it in (amortized) O(1).
+// 用来储存一些列数据的结构体，这个结构体可以维护这一些列数据中的最大值。
+// 及时对数据进行删除和插入操作　也依然可以得到最大值
+// 这个sliding_window是按照从大到小依次排列的，最大的元素位于队首　最小的位于队尾
+// 这个滑动窗口主要是用来生成地图的时候　求解一个范围内的所有元素的最大值
 class SlidingWindowMaximum
 {
  public:
+
+  //插入一个值　找到sliding window中的位置
   void AddValue(const float value)
   {
     while (!non_ascending_maxima_.empty() &&
@@ -51,18 +57,21 @@ class SlidingWindowMaximum
     non_ascending_maxima_.push_back(value);
   }
 
+  //删除值　每次只能删除最大的值
   void RemoveValue(const float value)
   {
     // DCHECK for performance, since this is done for every value in the
     // precomputation grid.
     DCHECK(!non_ascending_maxima_.empty());
     DCHECK_LE(value, non_ascending_maxima_.front());
+
     if (value == non_ascending_maxima_.front())
     {
       non_ascending_maxima_.pop_front();
     }
   }
 
+  //在预先计算地图的时候　每个栅格都需要用这个函数进行计算
   float GetMaximum() const
   {
     // DCHECK for performance, since this is done for every value in the
@@ -76,11 +85,13 @@ class SlidingWindowMaximum
  private:
   // Maximum of the current sliding window at the front. Then the maximum of the
   // remaining window that came after this values first occurence, and so on.
+  // 这个sliding　window的最大值位于队列的首位
   std::deque<float> non_ascending_maxima_;
 };
 
 }  // namespace
 
+//用来做进行CSM搜索的三个参数，线性搜索窗口、角度搜索窗口、分枝定界深度
 proto::FastCorrelativeScanMatcherOptions
 CreateFastCorrelativeScanMatcherOptions(
     common::LuaParameterDictionary* const parameter_dictionary)
@@ -98,10 +109,12 @@ CreateFastCorrelativeScanMatcherOptions(
 /**
  * @brief PrecomputationGrid::PrecomputationGrid
  * 栅格地图的构造函数
- * @param probability_grid
- * @param limits
- * @param width
- * @param reusable_intermediate_grid
+ * 这个函数就是在原始地图的基础上　生成分辨率位width*origin_resolution的地图
+ * 这个函数就是地图分成的最基础的函数　用来生成一系列不同分辨率的地图
+ * @param probability_grid                  对应的概率地图(原始地图)
+ * @param limits                            地图的参数(原始地图的参数　大小 x方向和y方向的cell的数量)
+ * @param width                             地图的宽度(地图是正方形的)　可以认为是地图的分辨率 width*width个原始地图栅格合成一个
+ * @param reusable_intermediate_grid        可以重复使用的中间栅格 用来计算最大值的一个中间值
  */
 PrecomputationGrid::PrecomputationGrid(
     const ProbabilityGrid& probability_grid,
@@ -117,33 +130,51 @@ PrecomputationGrid::PrecomputationGrid(
   CHECK_GE(limits.num_x_cells, 1);
   CHECK_GE(limits.num_y_cells, 1);
 
+  //地图的一行的栅格数量　这个地图的栅格数量在原始地图的基础上增加了width-1个 因为原始地图的边界元素也需要做同样的修改
   const int stride = wide_limits_.num_x_cells;
+
   // First we compute the maximum probability for each (x0, y) achieved in the
   // span defined by x0 <= x < x0 + width.
+  //　保持y的分辨率不变　把x0分割为长度为width的线段　并且求解每个线段的中的最大值
   std::vector<float>& intermediate = *reusable_intermediate_grid;
+
+  //重新设置大小
   intermediate.resize(wide_limits_.num_x_cells * limits.num_y_cells);
+
+  //枚举原始地图所有的y　这里是把每一行分为width的段，求解出每个width的段的最大值
   for (int y = 0; y != limits.num_y_cells; ++y)
   {
     SlidingWindowMaximum current_values;
+
+    //设置0
     current_values.AddValue(
         probability_grid.GetProbability(Eigen::Array2i(0, y)));
+
+    //求x=(1,width-1)区间的最大值　上面已经加入了0　因此总的东西是(0,width-1)
     for (int x = -width + 1; x != 0; ++x)
     {
       intermediate[x + width - 1 + y * stride] = current_values.GetMaximum();
+
       if (x + width < limits.num_x_cells)
       {
         current_values.AddValue(
             probability_grid.GetProbability(Eigen::Array2i(x + width, y)));
       }
     }
+
+    //求x=(width,limits.num_x_cells)区间的最大值
     for (int x = 0; x < limits.num_x_cells - width; ++x)
     {
       intermediate[x + width - 1 + y * stride] = current_values.GetMaximum();
+
+      //求出(x,y)加入(x_width,y) 相当于窗口进行滑动，在x轴进行滑动
       current_values.RemoveValue(
           probability_grid.GetProbability(Eigen::Array2i(x, y)));
+
       current_values.AddValue(
           probability_grid.GetProbability(Eigen::Array2i(x + width, y)));
     }
+
     for (int x = std::max(limits.num_x_cells - width, 0);
          x != limits.num_x_cells; ++x)
     {
@@ -153,13 +184,25 @@ PrecomputationGrid::PrecomputationGrid(
     }
     current_values.CheckIsEmpty();
   }
+
+
   // For each (x, y), we compute the maximum probability in the width x width
   // region starting at each (x, y) and precompute the resulting bound on the
   // score.
+  // 对应每个(x,y)，我们都需要计算周围width*width的范围对应的栅格的最大值　作为当前的值
+  // 这里枚举的是要生成的地图的每一个x的栅格值
+
+  // 经过上面的计算　intermediate的每一个行元素存储的都是一个width线段的最大值。
+  // 这里的width线段是当前点i和i+width-1这一段的值
+  // 下面的功能基本上是一样的，不过因为intermediate已经计算出来了，是width的线段的最大值
+  // 这里计算的就是width*width里面的最大值
   for (int x = 0; x != wide_limits_.num_x_cells; ++x)
   {
+
     SlidingWindowMaximum current_values;
     current_values.AddValue(intermediate[x]);
+
+    //求解第x列的　(0,width-1)的最大值　并且赋值给cells_
     for (int y = -width + 1; y != 0; ++y)
     {
       cells_[x + (y + width - 1) * stride] =
@@ -169,6 +212,9 @@ PrecomputationGrid::PrecomputationGrid(
         current_values.AddValue(intermediate[x + (y + width) * stride]);
       }
     }
+
+    //窗口开始滑动　每入一个　就出一个　按照y的方向滑动.
+
     for (int y = 0; y < limits.num_y_cells - width; ++y)
     {
       cells_[x + (y + width - 1) * stride] =
@@ -176,6 +222,7 @@ PrecomputationGrid::PrecomputationGrid(
       current_values.RemoveValue(intermediate[x + y * stride]);
       current_values.AddValue(intermediate[x + (y + width) * stride]);
     }
+
     for (int y = std::max(limits.num_y_cells - width, 0);
          y != limits.num_y_cells; ++y)
     {
@@ -200,6 +247,9 @@ uint8 PrecomputationGrid::ComputeCellValue(const float probability) const
   const int cell_value = common::RoundToInt(
       (probability - mapping::kMinProbability) *
       (255.f / (mapping::kMaxProbability - mapping::kMinProbability)));
+
+  assert()
+
   CHECK_GE(cell_value, 0);
   CHECK_LE(cell_value, 255);
   return cell_value;
@@ -218,12 +268,14 @@ class PrecomputationGridStack
       const ProbabilityGrid& probability_grid,
       const proto::FastCorrelativeScanMatcherOptions& options)
   {
+    //最粗的分辨率　这个是由分枝定界的深度决定的。
     CHECK_GE(options.branch_and_bound_depth(), 1);
     const int max_width = 1 << (options.branch_and_bound_depth() - 1);
 
     //GridStack中地图的个数 即地图分为多少分辨率的
     precomputation_grids_.reserve(options.branch_and_bound_depth());
 
+    //可以重复使用的中间栅格
     std::vector<float> reusable_intermediate_grid;
     const CellLimits limits = probability_grid.limits().cell_limits();
 
@@ -231,6 +283,11 @@ class PrecomputationGridStack
                                        limits.num_y_cells);
 
     //构造各个不同分辨率的栅格地图
+    //width表示不同分辨率的栅格
+    //1表示　最细的分辨率 origin_resolutino
+    //2表示　　２*origin_resolution
+    //4表示　　4*origin_resolution
+    //8表示　　8*origin_resolution
     for (int i = 0; i != options.branch_and_bound_depth(); ++i)
     {
       //表示步长
@@ -240,7 +297,7 @@ class PrecomputationGridStack
     }
   }
 
-  //得到index对应的栅格地图
+  //得到index对应的栅格地图　index表示深度
   const PrecomputationGrid& Get(int index)
   {
     return precomputation_grids_[index];
@@ -279,10 +336,12 @@ bool FastCorrelativeScanMatcher::Match(
     const sensor::PointCloud2D& point_cloud, const float min_score,
     float* score, transform::Rigid2d* pose_estimate) const
 {
+  //设置搜索参数
   const SearchParameters search_parameters(options_.linear_search_window(),
                                            options_.angular_search_window(),
                                            point_cloud, limits_.resolution());
 
+  //用这个参数进行匹配
   return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
                                    point_cloud, min_score, score,
                                    pose_estimate);
@@ -327,6 +386,7 @@ bool FastCorrelativeScanMatcher::MatchFullSubmap(
 /**
  * @brief FastCorrelativeScanMatcher::MatchWithSearchParameters
  * 根据搜索窗口和初始位置进行scan-match来进行位姿的优化。
+ * 这个函数是最终的匹配函数　所有的东西都是通过这个函数来进行匹配的。
  * 得到的新的位姿的分数必须大于min_score
  * 这个函数被Match()和MatchFullSubmap()调用
  * @param search_parameters         主要设置搜索窗口的大小
@@ -360,6 +420,8 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
       GenerateRotatedScans(rotated_point_cloud, search_parameters);
 
   //把上面的rotated scans转换到世界坐标系中 然后转换到地图坐标系中
+  //这里之后，所有激光点的坐标走在世界坐标系中了　或者说地图坐标系中。
+  //这里的离散激光点　是在最细的分辨率的地图上面
   const std::vector<DiscreteScan> discrete_scans = DiscretizeScans(
       limits_, rotated_scans,
       Eigen::Translation2f(initial_pose_estimate.translation().x(),
@@ -369,6 +431,7 @@ bool FastCorrelativeScanMatcher::MatchWithSearchParameters(
 
   //计算最低分辨率中的所有的候选解 最低分辨率是通过搜索树的层数、地图的分辨率计算出来的。
   //对于地图坐标系来说 最低分辨率=1<<h h表示搜索树的总的层数
+  //这里不但对最低分辨率的所有候选解的得分进行了计算　同时还按照从大到小排列
   const std::vector<Candidate> lowest_resolution_candidates =
       ComputeLowestResolutionCandidates(discrete_scans, search_parameters);
 
@@ -417,6 +480,7 @@ std::vector<Candidate> FastCorrelativeScanMatcher::ComputeLowestResolutionCandid
  * @brief FastCorrelativeScanMatcher::GenerateLowestResolutionCandidates
  * 生成最低分辨率的所有的可行解 这个和一般的计算Candidates的不同在于在计算线性步长的时候要考虑分辨率的影响。
  * 线性步长不再是1 而是2^(h) h从0开始
+ * 最低分辨率的解的个数为:(linear_search_window/linear_step_size)^2 * num_scans
  * 这个函数被ComputeLowestResolutionCandidates()调用
  * @param search_parameters
  * @return
@@ -491,6 +555,7 @@ void FastCorrelativeScanMatcher::ScoreCandidates(
     int sum = 0;
     //每个候选解 枚举所有的激光点 累计占用概率log-odd
     //这里都是固定的角度的，因此激光点的坐标就等于激光点在车体坐标系的坐标加上候选解的坐标
+    //这里的xy_index是已经激光雷达原始坐标计算出来的，因此需要加上这个候选解相对于原始位置的偏移
     for (const Eigen::Array2i& xy_index :
          discrete_scans[candidate.scan_index])
     {
@@ -515,7 +580,7 @@ void FastCorrelativeScanMatcher::ScoreCandidates(
  * @param discrete_scans            离散的旋转激光数据discretescan rotate scan
  * @param search_parameters         搜索窗口的相应的参数
  * @param candidates                所有的可行解
- * @param candidate_depth           底层的层数(Multi-Level里面有多少个Level)
+ * @param candidate_depth           地图的层数(Multi-Level里面有多少个Level)　当前节点的深度　也就是当前节点的地图的层数
  * @param min_score                 能接受的最小的分数(也可以认为是当前的最优解的得分 凡是比当前最优解低的分数 一律不要)
  * 在分枝定界的方法中，一节node只表示一个角度。
  * 因此实际构造的束的根节点下面有N个1层子节点，N=rotated scans的数量。
@@ -533,6 +598,7 @@ Candidate FastCorrelativeScanMatcher::BranchAndBound(
 {
   //如果只有一层 那么最低分辨率中最好的就是全局最好的，直接返回
   //相当于是叶子节点 这个分数会用来更新父节点的best_score。
+  //这个在返回之后　会用来更新bestScore
   if (candidate_depth == 0)
   {
     // Return the best candidate.
@@ -542,7 +608,7 @@ Candidate FastCorrelativeScanMatcher::BranchAndBound(
   Candidate best_high_resolution_candidate(0, 0, 0, search_parameters);
   best_high_resolution_candidate.score = min_score;
 
-  //枚举所有的候选解
+  //枚举所有的候选解　从高到低美剧
   for (const Candidate& candidate : candidates)
   {
     //如果某个候选解小于min_score可不需要再进行计算了。这里的min_score相当于当前搜索过的所有解中的最优解的得分
@@ -555,6 +621,7 @@ Candidate FastCorrelativeScanMatcher::BranchAndBound(
       break;
     }
 
+    //开始进行分支
     std::vector<Candidate> higher_resolution_candidates;
     const int half_width = 1 << (candidate_depth - 1);
     //该节点分解为四个子节点 这里就是分枝

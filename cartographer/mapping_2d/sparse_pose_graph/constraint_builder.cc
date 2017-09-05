@@ -40,7 +40,8 @@ namespace cartographer {
 namespace mapping_2d {
 namespace sparse_pose_graph {
 
-transform::Rigid2d ComputeSubmapPose(const mapping::Submap& submap) {
+transform::Rigid2d ComputeSubmapPose(const mapping::Submap& submap)
+{
   return transform::Project2D(submap.local_pose());
 }
 
@@ -53,7 +54,8 @@ ConstraintBuilder::ConstraintBuilder(
       adaptive_voxel_filter_(options.adaptive_voxel_filter_options()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options()) {}
 
-ConstraintBuilder::~ConstraintBuilder() {
+ConstraintBuilder::~ConstraintBuilder()
+{
   common::MutexLocker locker(&mutex_);
   CHECK_EQ(constraints_.size(), 0) << "WhenDone() was not called";
   CHECK_EQ(pending_computations_.size(), 0);
@@ -61,21 +63,28 @@ ConstraintBuilder::~ConstraintBuilder() {
   CHECK(when_done_ == nullptr);
 }
 
+//计算前后位姿之间的约束关系
 void ConstraintBuilder::MaybeAddConstraint(
     const int submap_index, const mapping::Submap* const submap,
     const int scan_index, const sensor::PointCloud2D* const point_cloud,
-    const transform::Rigid2d& initial_relative_pose) {
+    const transform::Rigid2d& initial_relative_pose)
+{
   if (initial_relative_pose.translation().norm() >
-      options_.max_constraint_distance()) {
+      options_.max_constraint_distance())
+  {
     return;
   }
-  if (sampler_.Pulse()) {
+
+  if (sampler_.Pulse())
+  {
     common::MutexLocker locker(&mutex_);
     CHECK_LE(scan_index, current_computation_);
+
     constraints_.emplace_back();
     auto* const constraint = &constraints_.back();
     ++pending_computations_[current_computation_];
     const int current_computation = current_computation_;
+
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_index, submap->finished_probability_grid,
         [=]() EXCLUDES(mutex_) {
@@ -90,18 +99,21 @@ void ConstraintBuilder::MaybeAddConstraint(
   }
 }
 
+//进行回环检测
 void ConstraintBuilder::MaybeAddGlobalConstraint(
     const int submap_index, const mapping::Submap* const submap,
     const int scan_index, const mapping::Submaps* scan_trajectory,
     const mapping::Submaps* submap_trajectory,
     mapping::TrajectoryConnectivity* trajectory_connectivity,
-    const sensor::PointCloud2D* const point_cloud) {
+    const sensor::PointCloud2D* const point_cloud)
+{
   common::MutexLocker locker(&mutex_);
   CHECK_LE(scan_index, current_computation_);
   constraints_.emplace_back();
   auto* const constraint = &constraints_.back();
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
+
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       submap_index, submap->finished_probability_grid, [=]() EXCLUDES(mutex_) {
         ComputeConstraint(submap_index, submap, scan_index, submap_trajectory,
@@ -170,6 +182,7 @@ ConstraintBuilder::GetSubmapScanMatcher(const int submap_index) {
   return submap_scan_matcher;
 }
 
+//真正的计算约束的函数　这个函数被MaybeAddGlobalConstraint()和MaybeAddConstraint()调用
 void ConstraintBuilder::ComputeConstraint(
     const int submap_index, const mapping::Submap* const submap,
     const int scan_index, const mapping::Submaps* scan_trajectory,
@@ -177,11 +190,14 @@ void ConstraintBuilder::ComputeConstraint(
     mapping::TrajectoryConnectivity* trajectory_connectivity,
     const sensor::PointCloud2D* const point_cloud,
     const transform::Rigid2d& initial_relative_pose,
-    std::unique_ptr<OptimizationProblem::Constraint>* constraint) {
+    std::unique_ptr<OptimizationProblem::Constraint>* constraint)
+{
   const transform::Rigid2d initial_pose =
       ComputeSubmapPose(*submap) * initial_relative_pose;
+
   const SubmapScanMatcher* const submap_scan_matcher =
       GetSubmapScanMatcher(submap_index);
+
   const sensor::PointCloud2D filtered_point_cloud =
       adaptive_voxel_filter_.Filter(*point_cloud);
 
@@ -193,18 +209,28 @@ void ConstraintBuilder::ComputeConstraint(
   float score = 0.;
   transform::Rigid2d pose_estimate = transform::Rigid2d::Identity();
 
-  if (match_full_submap) {
+  //在整个图上进行搜索　程序自行确实搜索的起始位姿
+  if (match_full_submap)
+  {
     if (submap_scan_matcher->fast_correlative_scan_matcher->MatchFullSubmap(
             filtered_point_cloud, options_.global_localization_min_score(),
-            &score, &pose_estimate)) {
+            &score, &pose_estimate))
+    {
       trajectory_connectivity->Connect(scan_trajectory, submap_trajectory);
-    } else {
+    }
+    else
+    {
       return;
     }
-  } else {
+  }
+
+  //指定初始位姿
+  else
+  {
     if (!submap_scan_matcher->fast_correlative_scan_matcher->Match(
             initial_pose, filtered_point_cloud, options_.min_score(), &score,
-            &pose_estimate)) {
+            &pose_estimate))
+    {
       return;
     }
     // We've reported a successful local match.
@@ -218,6 +244,7 @@ void ConstraintBuilder::ComputeConstraint(
   // Use the CSM estimate as both the initial and previous pose. This has the
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
+  // 用CSM的解作为初始解，再次用ceres来进行优化
   ceres::Solver::Summary unused_summary;
   kalman_filter::Pose2DCovariance covariance;
   ceres_scan_matcher_.Match(pose_estimate, pose_estimate, filtered_point_cloud,
@@ -227,6 +254,8 @@ void ConstraintBuilder::ComputeConstraint(
 
   const transform::Rigid2d constraint_transform =
       ComputeSubmapPose(*submap).inverse() * pose_estimate;
+
+  //增加一个约束
   constraint->reset(new OptimizationProblem::Constraint{
       submap_index,
       scan_index,
@@ -235,7 +264,8 @@ void ConstraintBuilder::ComputeConstraint(
            covariance, options_.lower_covariance_eigenvalue_bound())},
       OptimizationProblem::Constraint::INTER_SUBMAP});
 
-  if (options_.log_matches()) {
+  if (options_.log_matches())
+  {
     const transform::Rigid2d difference =
         initial_pose.inverse() * pose_estimate;
     std::ostringstream info;
@@ -251,24 +281,32 @@ void ConstraintBuilder::ComputeConstraint(
   }
 }
 
-void ConstraintBuilder::FinishComputation(const int computation_index) {
+void ConstraintBuilder::FinishComputation(const int computation_index)
+{
   Result result;
   std::unique_ptr<std::function<void(const Result&)>> callback;
   {
     common::MutexLocker locker(&mutex_);
-    if (--pending_computations_[computation_index] == 0) {
+    if (--pending_computations_[computation_index] == 0)
+    {
       pending_computations_.erase(computation_index);
     }
-    if (pending_computations_.empty()) {
+
+    if (pending_computations_.empty())
+    {
       CHECK_EQ(submap_queued_work_items_.size(), 0);
-      if (when_done_ != nullptr) {
+      if (when_done_ != nullptr)
+      {
         for (const std::unique_ptr<OptimizationProblem::Constraint>&
-                 constraint : constraints_) {
-          if (constraint != nullptr) {
+                 constraint : constraints_)
+        {
+          if (constraint != nullptr)
+          {
             result.push_back(*constraint);
           }
         }
-        if (options_.log_matches()) {
+        if (options_.log_matches())
+        {
           LOG(INFO) << constraints_.size() << " computations resulted in "
                     << result.size() << " additional constraints.";
           LOG(INFO) << "Score histogram:\n" << score_histogram_.ToString(10);
@@ -279,7 +317,8 @@ void ConstraintBuilder::FinishComputation(const int computation_index) {
       }
     }
   }
-  if (callback != nullptr) {
+  if (callback != nullptr)
+  {
     (*callback)(result);
   }
 }

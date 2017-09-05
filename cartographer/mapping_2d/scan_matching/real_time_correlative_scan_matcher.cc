@@ -81,18 +81,21 @@ RealTimeCorrelativeScanMatcher::GenerateExhaustiveSearchCandidates(
   for (int scan_index = 0; scan_index != search_parameters.num_scans;
        ++scan_index)
   {
+    //计算x的候选解
     const int num_linear_x_candidates =
         (search_parameters.linear_bounds[scan_index].max_x -
          search_parameters.linear_bounds[scan_index].min_x + 1);
 
+    //计算y的候选解
     const int num_linear_y_candidates =
         (search_parameters.linear_bounds[scan_index].max_y -
          search_parameters.linear_bounds[scan_index].min_y + 1);
 
+    //累加候选解的个数
     num_candidates += num_linear_x_candidates * num_linear_y_candidates;
   }
 
-  //获得三层for循环的组合起来的所有的解
+  //获得三层for循环的组合起来的所有的解　这里所有的点角度都是下标　xy都是grid_index
   std::vector<Candidate> candidates;
   candidates.reserve(num_candidates);
   //最外层循环表示角度

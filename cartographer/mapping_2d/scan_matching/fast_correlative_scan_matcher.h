@@ -67,6 +67,9 @@ class PrecomputationGrid
   // Returns a value between 0 and 255 to represent probabilities between
   // kMinProbability and kMaxProbability.
   // 返回对应下标的CellValue
+  // 可以认为这里传入的index是　概率地图的index
+  // 要转换成PrecomputationGrid的index的话　要加上offset
+  // 因为precomputationGrid相比与原始地图来说　要
   int GetValue(const Eigen::Array2i& xy_index) const
   {
     const Eigen::Array2i local_xy_index = xy_index - offset_;
@@ -101,10 +104,13 @@ class PrecomputationGrid
 
   // Offset of the precomputation grid in relation to the 'probability_grid'
   // including the additional 'width' - 1 cells.
+  // 预计算地图　和　概率地图的唯一关系
+  // 预计算地图比概率地图来说多了width-1的cells
+  // 预计算的栅格地图　相对于　原始地图　的offset
   const Eigen::Array2i offset_;
 
   // Size of the precomputation grid.
-  // 地图的大小
+  // 地图的大小 这个一般是在原始的地图大小上　加入 width
   const CellLimits wide_limits_;
 
   // Probabilites mapped to 0 to 255.
