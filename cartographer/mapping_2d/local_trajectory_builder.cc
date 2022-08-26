@@ -253,6 +253,8 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
   // tracking_to_tracking_2d表示把激光雷达目前的坐标系转换到平面坐标系的转换矩阵
   // tracking表示目前激光雷达所在的坐标系
   // tracking_2d表示原点与tracking坐标系重合的平面坐标系
+
+  // 目前的旋转向量是-yaw，平移向量是0,0,0
   const transform::Rigid3d tracking_to_tracking_2d =
       transform::Rigid3d::Rotation(
         //绕z轴旋转-yaw度
@@ -317,7 +319,7 @@ LocalTrajectoryBuilder::AddHorizontalLaserFan(
   const transform::Rigid2d pose_estimate_2d =
       transform::Project2D(tracking_2d_to_map);
 
-  //运动滤波器器？？不知道什么东西
+  //运动滤波器器
   if (motion_filter_.IsSimilar(time, transform::Embed3D(pose_estimate_2d)))
   {
     return nullptr;

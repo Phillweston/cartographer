@@ -63,7 +63,7 @@ ConstraintBuilder::~ConstraintBuilder()
   CHECK(when_done_ == nullptr);
 }
 
-//计算前后位姿之间的约束关系
+//计算约束激光和scan-match的约束，被spa调用
 void ConstraintBuilder::MaybeAddConstraint(
     const int submap_index, const mapping::Submap* const submap,
     const int scan_index, const sensor::PointCloud2D* const point_cloud,
@@ -99,7 +99,7 @@ void ConstraintBuilder::MaybeAddConstraint(
   }
 }
 
-//进行回环检测
+//计算激光和scan-match的约束，被spa调用
 void ConstraintBuilder::MaybeAddGlobalConstraint(
     const int submap_index, const mapping::Submap* const submap,
     const int scan_index, const mapping::Submaps* scan_trajectory,
@@ -109,8 +109,10 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
 {
   common::MutexLocker locker(&mutex_);
   CHECK_LE(scan_index, current_computation_);
+
   constraints_.emplace_back();
   auto* const constraint = &constraints_.back();
+
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
 
@@ -124,33 +126,45 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
       });
 }
 
-void ConstraintBuilder::NotifyEndOfScan(const int scan_index) {
+void ConstraintBuilder::NotifyEndOfScan(const int scan_index)
+{
   common::MutexLocker locker(&mutex_);
   CHECK_EQ(current_computation_, scan_index);
   ++current_computation_;
 }
 
 void ConstraintBuilder::WhenDone(
-    const std::function<void(const ConstraintBuilder::Result&)> callback) {
+    const std::function<void(const ConstraintBuilder::Result&)> callback)
+{
   common::MutexLocker locker(&mutex_);
   CHECK(when_done_ == nullptr);
   when_done_ =
       common::make_unique<std::function<void(const Result&)>>(callback);
+
   ++pending_computations_[current_computation_];
+
   const int current_computation = current_computation_;
+
   thread_pool_->Schedule(
       [this, current_computation] { FinishComputation(current_computation); });
 }
 
+//加入一个队列进行处理．
+//里面会启动线程池进行处理．
 void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
     const int submap_index, const ProbabilityGrid* const submap,
-    const std::function<void()> work_item) {
+    const std::function<void()> work_item)
+{
   if (submap_scan_matchers_[submap_index].fast_correlative_scan_matcher !=
-      nullptr) {
+      nullptr)
+  {
     thread_pool_->Schedule(work_item);
-  } else {
+  }
+  else
+  {
     submap_queued_work_items_[submap_index].push_back(work_item);
-    if (submap_queued_work_items_[submap_index].size() == 1) {
+    if (submap_queued_work_items_[submap_index].size() == 1)
+    {
       thread_pool_->Schedule(
           std::bind(std::mem_fn(&ConstraintBuilder::ConstructSubmapScanMatcher),
                     this, submap_index, submap));
@@ -159,7 +173,8 @@ void ConstraintBuilder::ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
 }
 
 void ConstraintBuilder::ConstructSubmapScanMatcher(
-    const int submap_index, const ProbabilityGrid* const submap) {
+    const int submap_index, const ProbabilityGrid* const submap)
+{
   auto submap_scan_matcher =
       common::make_unique<scan_matching::FastCorrelativeScanMatcher>(
           *submap, options_.fast_correlative_scan_matcher_options());
@@ -167,7 +182,8 @@ void ConstraintBuilder::ConstructSubmapScanMatcher(
   submap_scan_matchers_[submap_index] = {submap,
                                          std::move(submap_scan_matcher)};
   for (const std::function<void()>& work_item :
-       submap_queued_work_items_[submap_index]) {
+       submap_queued_work_items_[submap_index])
+  {
     thread_pool_->Schedule(work_item);
   }
   submap_queued_work_items_.erase(submap_index);
@@ -280,6 +296,8 @@ void ConstraintBuilder::ComputeConstraint(
     LOG(INFO) << info.str();
   }
 }
+
+
 
 void ConstraintBuilder::FinishComputation(const int computation_index)
 {
